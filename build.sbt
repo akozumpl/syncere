@@ -22,5 +22,9 @@ lazy val root = (project in file("."))
       "org.scalatest" %% "scalatest" % "3.2.11" % "test"
     ),
     cancelable in Global := true,
-    fork := true
+    fork := true,
+    addCommandAlias(
+      "prep",
+      List("scalafmtSbt", "scalafmtAll", "test").mkString(";")
+    )
   )
