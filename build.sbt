@@ -25,6 +25,8 @@ lazy val root = (project in file("."))
     fork := true,
     addCommandAlias(
       "prep",
-      List("scalafmtSbt", "scalafmtAll", "test").mkString(";")
-    )
+      List("scalafixAll", "scalafmtSbt", "scalafmtAll", "test").mkString(";")
+    ),
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
   )

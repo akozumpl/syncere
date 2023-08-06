@@ -1,8 +1,9 @@
 package cative.syncere.engine
 
-import cative.syncere.meta.KeyEntry
 import cats.Show
 import cats.syntax.show._
+
+import cative.syncere.meta.KeyEntry
 
 sealed trait Action
 

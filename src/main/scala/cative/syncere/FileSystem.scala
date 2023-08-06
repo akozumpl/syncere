@@ -1,12 +1,13 @@
 package cative.syncere
 
-import cative.syncere.meta.Db
-import cative.syncere.meta.KeyEntry
-
 import java.nio.file.Files
 import java.nio.file.Path
+
 import scala.jdk.CollectionConverters._
 import scala.jdk.StreamConverters._
+
+import cative.syncere.meta.Db
+import cative.syncere.meta.KeyEntry
 
 object FileSystem {
 
