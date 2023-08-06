@@ -9,6 +9,7 @@ import scala.jdk.CollectionConverters._
 import scala.jdk.StreamConverters._
 
 object FileSystem {
+
   /** Produces a key given the root.
     *
     * Root itself corresponds to the empty key.
