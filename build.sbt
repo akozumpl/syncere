@@ -1,5 +1,7 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+val CirceVersion = "0.14.5"
+
 lazy val root = (project in file("."))
   .settings(
     name := "syncere",
@@ -17,6 +19,9 @@ lazy val root = (project in file("."))
       // Java deps (no native equivalent)
       "software.amazon.awssdk" % "s3" % "2.20.116",
       // Scala deps, working in native
+      "io.circe" %% "circe-core" % CirceVersion,
+      "io.circe" %% "circe-generic" % CirceVersion,
+      "io.circe" %% "circe-parser" % CirceVersion,
       "org.typelevel" %% "cats-core" % "2.9.0",
       // test
       "org.scalatest" %% "scalatest" % "3.2.11" % "test"
