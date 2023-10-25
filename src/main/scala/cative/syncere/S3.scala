@@ -1,6 +1,7 @@
 package cative.syncere
 
 import scala.jdk.CollectionConverters.*
+import cats.effect.IO
 import cats.syntax.option._
 
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
@@ -19,7 +20,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
 import software.amazon.awssdk.services.s3.model.Tag
 
-import meta.KeyEntry;
+import meta.KeyEntry
 
 object S3 {
   import Config._
@@ -36,16 +37,18 @@ object S3 {
 }
 
 class S3(client: S3Client, bucket: String) {
-  def list(): List[KeyEntry] = {
+  def list(): IO[List[KeyEntry]] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
-    client
-      .listObjects(req)
-      .contents()
-      .asScala
-      .map { s3Obj =>
-        KeyEntry(s3Obj.key(), s3Obj.eTag().some)
-      }
-      .toList
+    IO(
+      client
+        .listObjects(req)
+        .contents()
+        .asScala
+        .map { s3Obj =>
+          KeyEntry(s3Obj.key(), s3Obj.eTag().some)
+        }
+        .toList
+    )
   }
 
 }

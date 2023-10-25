@@ -5,6 +5,7 @@ import java.nio.file.Path
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.StreamConverters._
+import cats.effect.IO
 
 import cative.syncere.meta.Db
 import cative.syncere.meta.KeyEntry
@@ -18,21 +19,25 @@ object FileSystem {
   private def pathToKey(root: Path)(p: Path): KeyEntry.Key =
     root.relativize(p).toString
 
-  def dbFromFileIterator(entries: Iterator[KeyEntry.Key]): Db = {
-    val entriesMap = entries.map { k =>
-      (k, KeyEntry(k, None))
-    }.toMap
-    Db(entriesMap)
-  }
+  def dbFromFileIterator(entries: Iterator[KeyEntry.Key]): IO[Db] =
+    IO {
+      entries.map { k =>
+        (k, KeyEntry(k, None))
+      }.toMap
+    }.map(Db.apply)
 
-  def fetchDbLocal(): Db = {
-    val iterator = Files
-      .walk(Config.SyncPath)
-      .iterator()
-      .asScala
-      .map(pathToKey(Config.SyncPath))
-      .filter(_.nonEmpty)
-    FileSystem.dbFromFileIterator(iterator)
-  }
+  def fetchDbLocal(): IO[Db] =
+    for {
+      raw <- IO(
+        Files
+          .walk(Config.SyncPath)
+          .iterator()
+          .asScala
+      )
+      refined = raw
+        .map(pathToKey(Config.SyncPath))
+        .filter(_.nonEmpty)
+      db <- FileSystem.dbFromFileIterator(refined)
+    } yield db
 
 }

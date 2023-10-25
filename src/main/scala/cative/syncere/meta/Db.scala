@@ -25,7 +25,7 @@ object Db {
   }
 }
 
-case class Db(val keys: Map[KeyEntry.Key, KeyEntry]) derives Codec.AsObject {
+case class Db(keys: Map[KeyEntry.Key, KeyEntry]) derives Codec.AsObject {
   def json: Json = this.asJson
 
   def projectTags: Map[KeyEntry.Key, KeyEntry.Tag] =
