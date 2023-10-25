@@ -13,8 +13,11 @@ import io.circe.syntax._
 
 object Db {
   given Show[Db] = Show { db =>
-    "=== show Db:\n" + db.keys.map(_.toString).mkString("\n")
+    s"=== show Db ${db.name}:\n" + db.keys.map(_.toString).mkString("\n")
   }
+
+  def build(name: String)(keys: Map[KeyEntry.Key, KeyEntry]): Db =
+    Db(name, keys)
 
   def deserialize(payload: Serializer.Payload): IO[Db] = {
     val res = for {
@@ -25,7 +28,8 @@ object Db {
   }
 }
 
-case class Db(keys: Map[KeyEntry.Key, KeyEntry]) derives Codec.AsObject {
+case class Db(name: String, keys: Map[KeyEntry.Key, KeyEntry])
+    derives Codec.AsObject {
   def json: Json = this.asJson
 
   def projectTags: Map[KeyEntry.Key, KeyEntry.Tag] =

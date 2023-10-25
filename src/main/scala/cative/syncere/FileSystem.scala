@@ -24,7 +24,7 @@ object FileSystem {
       entries.map { k =>
         (k, KeyEntry(k, None))
       }.toMap
-    }.map(Db.apply)
+    }.map(Db.build("localfs"))
 
   def fetchDbLocal(): IO[Db] =
     for {

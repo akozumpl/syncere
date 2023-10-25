@@ -13,7 +13,7 @@ object Serializer {
     for {
       payload <- IO(Files.readAllBytes(Config.DbPath))
       db <- Db.deserialize(payload)
-    } yield db
+    } yield db.copy("localmeta")
 
   def store(db: Db): IO[Unit] = {
     val payload = db.serialize
