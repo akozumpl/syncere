@@ -1,6 +1,7 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val CirceVersion = "0.14.5"
+val Slf4jVersion = "2.0.9"
 
 lazy val root = (project in file("."))
   .settings(
@@ -17,6 +18,7 @@ lazy val root = (project in file("."))
     ),
     libraryDependencies ++= Seq(
       // Java deps (no native equivalent)
+      "org.slf4j" % "slf4j-simple" % Slf4jVersion,
       "software.amazon.awssdk" % "s3" % "2.20.116",
       // Scala deps, working in native
       "io.circe" %% "circe-core" % CirceVersion,
