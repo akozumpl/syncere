@@ -1,8 +1,13 @@
 package cative.syncere
 
+import java.nio.file.Path
+
 import scala.jdk.CollectionConverters.*
 import cats.effect.IO
+import cats.effect.std.Console
 import cats.syntax.option._
+import cats.syntax.show._
+import cats.syntax.traverse._
 
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
@@ -20,6 +25,9 @@ import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
 import software.amazon.awssdk.services.s3.model.Tag
 
+import cative.syncere.engine.Action
+import cative.syncere.engine.Download
+import cative.syncere.engine.Upload
 import meta.KeyEntry
 
 object S3 {
@@ -37,6 +45,8 @@ object S3 {
 }
 
 class S3(client: S3Client, bucket: String) {
+  private val con = Console.apply[IO]
+
   def list(): IO[List[KeyEntry]] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     IO(
@@ -45,10 +55,26 @@ class S3(client: S3Client, bucket: String) {
         .contents()
         .asScala
         .map { s3Obj =>
+          println(s3Obj.eTag)
           KeyEntry(s3Obj.key(), s3Obj.eTag().some)
         }
         .toList
     )
   }
+
+  def play(a: Action): IO[Unit] = a match {
+    case Download(key) =>
+      val req = GetObjectRequest.builder().bucket(bucket).key(key.name).build()
+      con.println(show" --- downloading $key") >> IO(
+        client.getObject(req, FileSystem.keyToPath(key))
+      )
+    case Upload(key) =>
+      val req = PutObjectRequest.builder().bucket(bucket).key(key.name).build()
+      con.println(show" --- uploading $key") >> IO(
+        client.putObject(req, FileSystem.keyToPath(key))
+      )
+  }
+
+  def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())
 
 }

@@ -40,4 +40,7 @@ object FileSystem {
       db <- FileSystem.dbFromFileIterator(refined)
     } yield db
 
+  def keyToPath(key: KeyEntry): Path =
+    Config.SyncPath.resolve(key.name)
+
 }
