@@ -22,8 +22,10 @@ object FileSystem {
       Files
         .walk(Config.SyncPath)
     ).map(_.iterator().asScala)
-    flagged <- all.toList.map(path => IO((path, path.toFile().isFile()))).sequence
-    filesOnly = flagged.collect { case (path, true) => path}
+    flagged <- all.toList
+      .map(path => IO((path, path.toFile().isFile())))
+      .sequence
+    filesOnly = flagged.collect { case (path, true) => path }
   } yield filesOnly
 
   private def lastModified(p: Path): IO[Instant] =
