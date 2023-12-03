@@ -27,7 +27,7 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "cats-core" % "2.9.0",
       "org.typelevel" %% "cats-effect" % "3.5.1",
       // test
-      "org.scalatest" %% "scalatest" % "3.2.11" % "test"
+      "com.disneystreaming" %% "weaver-cats" % "0.8.3" % Test
     ),
     cancelable in Global := true,
     fork := true,
