@@ -17,10 +17,14 @@ import cative.syncere.meta.KeyEntry
 import cative.syncere.meta.Local
 
 object FileSystem {
-  private val iterateSyncPath: IO[Iterator[Path]] = IO(
-    Files
-      .walk(Config.SyncPath)
-  ).map(_.iterator().asScala)
+  private val walkSyncFiles: IO[List[Path]] = for {
+    all <- IO(
+      Files
+        .walk(Config.SyncPath)
+    ).map(_.iterator().asScala)
+    flagged <- all.toList.map(path => IO((path, path.toFile().isFile()))).sequence
+    filesOnly = flagged.collect { case (path, true) => path}
+  } yield filesOnly
 
   private def lastModified(p: Path): IO[Instant] =
     IO(Files.getLastModifiedTime(p)).map(_.toInstant)
@@ -42,7 +46,7 @@ object FileSystem {
   private def pathToKey(root: Path)(p: Path): KeyEntry.Key =
     root.relativize(p).toString
 
-  private def dbFromFileIterator(entries: Iterator[KeyEntry.Key]): IO[Db] =
+  private def dbFromFileIterator(entries: List[KeyEntry.Key]): IO[Db] =
     IO {
       entries.map { k =>
         (k, KeyEntry(k, None))
@@ -51,7 +55,7 @@ object FileSystem {
 
   def fetchDbLocal: IO[Db] =
     for {
-      raw <- iterateSyncPath
+      raw <- walkSyncFiles
       refined = raw
         .map(pathToKey(Config.SyncPath))
         .filter(_.nonEmpty)
@@ -60,7 +64,7 @@ object FileSystem {
 
   def fetchIntels: IO[Intels] =
     for {
-      iter <- iterateSyncPath
+      iter <- walkSyncFiles
       list <- iter.toList.traverse(localIntel)
     } yield Intels(list)
 
