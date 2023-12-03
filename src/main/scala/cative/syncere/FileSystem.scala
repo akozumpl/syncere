@@ -2,15 +2,38 @@ package cative.syncere
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.StreamConverters._
 import cats.effect.IO
+import cats.instances.string._
+import cats.syntax.traverse._
 
+import cative.syncere.filesystem.Md5
 import cative.syncere.meta.Db
+import cative.syncere.meta.Intels
 import cative.syncere.meta.KeyEntry
+import cative.syncere.meta.Local
 
 object FileSystem {
+  private val iterateSyncPath: IO[Iterator[Path]] = IO(
+    Files
+      .walk(Config.SyncPath)
+  ).map(_.iterator().asScala)
+
+  private def lastModified(p: Path): IO[Instant] =
+    IO(Files.getLastModifiedTime(p)).map(_.toInstant)
+
+  private def localIntel(p: Path): IO[Local] =
+    for {
+      md5 <- Md5.path(p)
+      lastMod <- lastModified(p)
+    } yield Local(
+      pathToKey(Config.SyncPath)(p),
+      md5,
+      lastMod
+    )
 
   /** Produces a key given the root.
     *
@@ -19,26 +42,27 @@ object FileSystem {
   private def pathToKey(root: Path)(p: Path): KeyEntry.Key =
     root.relativize(p).toString
 
-  def dbFromFileIterator(entries: Iterator[KeyEntry.Key]): IO[Db] =
+  private def dbFromFileIterator(entries: Iterator[KeyEntry.Key]): IO[Db] =
     IO {
       entries.map { k =>
         (k, KeyEntry(k, None))
       }.toMap
     }.map(Db.build("localfs"))
 
-  def fetchDbLocal(): IO[Db] =
+  def fetchDbLocal: IO[Db] =
     for {
-      raw <- IO(
-        Files
-          .walk(Config.SyncPath)
-          .iterator()
-          .asScala
-      )
+      raw <- iterateSyncPath
       refined = raw
         .map(pathToKey(Config.SyncPath))
         .filter(_.nonEmpty)
-      db <- FileSystem.dbFromFileIterator(refined)
+      db <- dbFromFileIterator(refined)
     } yield db
+
+  def fetchIntels: IO[Intels] =
+    for {
+      iter <- iterateSyncPath
+      list <- iter.toList.traverse(localIntel)
+    } yield Intels(list)
 
   def keyToPath(key: KeyEntry): Path =
     Config.SyncPath.resolve(key.name)
