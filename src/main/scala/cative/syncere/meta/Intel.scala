@@ -15,8 +15,12 @@ sealed trait Intel {
 
 object Intel {
   given Show[Intel] = Show.show {
+    case f: Full =>
+      f.show
     case l: Local =>
       l.show
+    case r: Remote =>
+      r.show
     case i =>
       s"Intel(${i.key})"
   }
@@ -24,6 +28,11 @@ object Intel {
 
 case class Full(local: Local, remote: Remote) extends Intel {
   override def key: Key = local.key
+}
+
+object Full {
+  given Show[Full] =
+    Show.show(f => show"Full intel: ${f.local} / ${f.remote}")
 }
 
 case class Local(
@@ -46,3 +55,8 @@ object Local {
 case class Recall(key: Key, tag: Tag, time: Instant) extends Intel
 
 case class Remote(key: Key, tag: Tag) extends Intel
+
+object Remote {
+  given Show[Remote] =
+    Show.show(r => show"Remote intel: ${r.key} ${r.tag}")
+}
