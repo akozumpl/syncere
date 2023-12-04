@@ -11,10 +11,10 @@ lazy val root = (project in file("."))
     scalaVersion := "3.3.0",
     scalacOptions ++= Seq(
       "-deprecation",
-      "-explaintypes",
       "-feature",
       "-language:implicitConversions",
-      "-language:postfixOps"
+      "-language:postfixOps",
+      "-Wvalue-discard"
     ),
     libraryDependencies ++= Seq(
       // Java deps (no native equivalent)

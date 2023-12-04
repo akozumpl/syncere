@@ -67,12 +67,12 @@ class S3(client: S3Client, bucket: String) {
       val req = GetObjectRequest.builder().bucket(bucket).key(key.name).build()
       con.println(show" --- downloading $key") >> IO(
         client.getObject(req, FileSystem.keyToPath(key))
-      )
+      ).as(())
     case Upload(key) =>
       val req = PutObjectRequest.builder().bucket(bucket).key(key.name).build()
       con.println(show" --- uploading $key") >> IO(
         client.putObject(req, FileSystem.keyToPath(key))
-      )
+      ).as(())
   }
 
   def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())

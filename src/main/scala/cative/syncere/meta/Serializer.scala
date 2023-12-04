@@ -17,7 +17,7 @@ object Serializer {
 
   def store(db: Db): IO[Unit] = {
     val payload = db.serialize
-    IO(Files.write(Config.DbPath, payload))
+    IO(Files.write(Config.DbPath, payload)).as(())
   }
 
 }
