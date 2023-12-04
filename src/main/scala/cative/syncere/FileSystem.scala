@@ -64,11 +64,11 @@ object FileSystem {
       db <- dbFromFileIterator(refined)
     } yield db
 
-  def fetchIntels: IO[Intels] =
+  def fetchIntels: IO[List[Local]] =
     for {
       iter <- walkSyncFiles
       list <- iter.toList.traverse(localIntel)
-    } yield Intels(list)
+    } yield list
 
   def keyToPath(key: KeyEntry): Path =
     Config.SyncPath.resolve(key.name)

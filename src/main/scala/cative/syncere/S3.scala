@@ -29,6 +29,8 @@ import cative.syncere.engine.Action
 import cative.syncere.engine.Download
 import cative.syncere.engine.Upload
 import meta.KeyEntry
+import meta.Intels
+import meta.Remote
 
 object S3 {
   import Config._
@@ -47,7 +49,7 @@ object S3 {
 class S3(client: S3Client, bucket: String) {
   private val con = Console.apply[IO]
 
-  def list(): IO[List[KeyEntry]] = {
+  def fetchIntels: IO[List[Remote]] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     IO(
       client
@@ -55,8 +57,7 @@ class S3(client: S3Client, bucket: String) {
         .contents()
         .asScala
         .map { s3Obj =>
-          println(s3Obj.eTag)
-          KeyEntry(s3Obj.key(), s3Obj.eTag().some)
+          Remote(s3Obj.key(), s3Obj.eTag())
         }
         .toList
     )
