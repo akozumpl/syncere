@@ -7,22 +7,20 @@ import cative.syncere.meta.KeyEntry
 
 sealed trait Action
 
-case class Download(k: KeyEntry) extends Action
-
-case class Upload(k: KeyEntry) extends Action
+case class Download(k: KeyEntry.Key) extends Action
+case object NoOp extends Action
+case class Upload(k: KeyEntry.Key) extends Action
 
 object Action {
   given showInstance: Show[Action] = Show { action =>
     action match {
-      case Upload(k) =>
-        s"---> ${k.name}"
       case Download(k) =>
-        s"<--- ${k.name}"
+        s"<--- $k"
+      case NoOp =>
+        "<noop>"
+      case Upload(k) =>
+        s"---> $k"
     }
-  }
-
-  given showListInstance: Show[List[Action]] = Show { actions =>
-    "=== show Actions:\n" + actions.map(_.show).mkString("\n")
   }
 
 }

@@ -8,12 +8,13 @@ import java.time.Instant
 import cats.Show
 import cats.effect.IO
 
-case class Md5(digest: List[Byte], at: Instant)
+case class Md5(digest: List[Byte], at: Instant) {
+  def stringDigest: String =
+    digest.map(b => String.format("%02x", b)).mkString("")
+}
 
 object Md5 {
-  given Show[Md5] = Show.show { md5 =>
-    md5.digest.map(b => String.format("%02x", b)).mkString("")
-  }
+  given Show[Md5] = Show.show(_.stringDigest)
 
   def path(path: Path): IO[Md5] =
     for {

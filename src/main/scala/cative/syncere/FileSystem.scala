@@ -70,7 +70,7 @@ object FileSystem {
       list <- iter.toList.traverse(localIntel)
     } yield list
 
-  def keyToPath(key: KeyEntry): Path =
-    Config.SyncPath.resolve(key.name)
+  def keyToPath(key: KeyEntry.Key): Path =
+    Config.SyncPath.resolve(key)
 
 }

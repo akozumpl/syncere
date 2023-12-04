@@ -28,29 +28,19 @@ object Engine {
     Intels(is)
   }
 
-  def reconcile(local: Db, remote: Db): List[Action] = {
-    val toDownload = remote.keys.values.filter { entry =>
-      !local.keys.isDefinedAt(entry.name)
-    }
-
-    val remoteTags = remote.projectTags
-    val toUpload = local.keys.values.filter { entry =>
-      entry.tag match {
-        case Some(tag) =>
-          remoteTags.get(entry.name) match {
-            case Some(correspondingTag) =>
-              tag != correspondingTag
-            case None =>
-              true
-          }
-
-        case None =>
-          true
+  def actions(i: Intels): List[Action] =
+    i.intels
+      .map {
+        case Full(l, r) if (l.tag.stringDigest != r.tag) =>
+          println(l.tag.stringDigest + "\n" + r.tag)
+          Upload(l.key)
+        case Local(k, _, _) =>
+          Upload(k)
+        case Remote(k, _) =>
+          Download(k)
+        case _ =>
+          NoOp
       }
-    }
-
-    val concat = toDownload.map(Download.apply) ++
-      toUpload.map(Upload.apply)
-    concat.toList
-  }
+      .filter(_ != NoOp)
+      .toList
 }

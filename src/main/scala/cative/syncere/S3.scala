@@ -57,7 +57,8 @@ class S3(client: S3Client, bucket: String) {
         .contents()
         .asScala
         .map { s3Obj =>
-          Remote(s3Obj.key(), s3Obj.eTag())
+          val tag = s3Obj.eTag().filterNot(_ == '"')
+          Remote(s3Obj.key(), tag)
         }
         .toList
     )
@@ -65,15 +66,16 @@ class S3(client: S3Client, bucket: String) {
 
   def play(a: Action): IO[Unit] = a match {
     case Download(key) =>
-      val req = GetObjectRequest.builder().bucket(bucket).key(key.name).build()
+      val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- downloading $key") >> IO(
         client.getObject(req, FileSystem.keyToPath(key))
       ).as(())
     case Upload(key) =>
-      val req = PutObjectRequest.builder().bucket(bucket).key(key.name).build()
+      val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- uploading $key") >> IO(
         client.putObject(req, FileSystem.keyToPath(key))
       ).as(())
+    case _ => IO.unit
   }
 
   def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())
