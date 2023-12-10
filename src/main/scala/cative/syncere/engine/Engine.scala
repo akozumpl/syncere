@@ -32,7 +32,6 @@ object Engine {
     i.intels
       .map {
         case Full(l, r) if (l.tag.stringDigest != r.tag) =>
-          println(l.tag.stringDigest + "\n" + r.tag)
           Upload(l.key)
         case Local(k, _, _) =>
           Upload(k)

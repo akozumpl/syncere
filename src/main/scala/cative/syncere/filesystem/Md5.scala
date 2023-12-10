@@ -1,20 +1,36 @@
 package cative.syncere.filesystem
 
 import java.io.FileInputStream
+import java.math.BigInteger
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.MessageDigest
 import java.time.Instant
 
+import scala.util.Try
 import cats.Show
 import cats.effect.IO
 
-case class Md5(digest: List[Byte], at: Instant) {
+case class Md5(digest: List[Byte]) {
   def stringDigest: String =
     digest.map(b => String.format("%02x", b)).mkString("")
 }
 
 object Md5 {
   given Show[Md5] = Show.show(_.stringDigest)
+
+  def fromS3Etag(etag: String): IO[Md5] = {
+    val err = Md5Error(s"Unexpected etag format: $etag")
+    for {
+      _ <- IO.raiseUnless(etag.startsWith("\""))(err)
+      _ <- IO.raiseUnless(etag.endsWith("\""))(err)
+      stripped = etag.drop(1).dropRight(1)
+      _ <- IO.raiseUnless(stripped.length == 32)(err)
+      bytes <- IO
+        .fromTry(Try(new BigInteger(stripped, 16)))
+        .map(_.toByteArray.toList)
+    } yield Md5(bytes)
+  }
 
   def path(path: Path): IO[Md5] =
     for {
@@ -27,6 +43,12 @@ object Md5 {
         md.digest()
       }
       at <- IO.realTimeInstant
-    } yield Md5(digest.toList, at)
+    } yield Md5(digest.toList)
+
+  def resourcePath(resourceName: String): IO[Md5] =
+    for {
+      p <- IO(Paths.get(getClass.getResource(resourceName).toURI()))
+      md5 <- path(p)
+    } yield md5
 
 }
