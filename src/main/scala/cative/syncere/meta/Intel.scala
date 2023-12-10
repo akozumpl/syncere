@@ -54,7 +54,7 @@ object Local {
   */
 case class Recall(key: Key, tag: Tag, time: Instant) extends Intel
 
-case class Remote(key: Key, tag: Tag) extends Intel
+case class Remote(key: Key, tag: Md5) extends Intel
 
 object Remote {
   given Show[Remote] =

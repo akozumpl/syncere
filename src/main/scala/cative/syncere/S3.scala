@@ -28,6 +28,7 @@ import software.amazon.awssdk.services.s3.model.Tag
 import cative.syncere.engine.Action
 import cative.syncere.engine.Download
 import cative.syncere.engine.Upload
+import cative.syncere.filesystem.Md5
 import meta.KeyEntry
 import meta.Intels
 import meta.Remote
@@ -51,17 +52,12 @@ class S3(client: S3Client, bucket: String) {
 
   def fetchIntels: IO[List[Remote]] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
-    IO(
-      client
-        .listObjects(req)
-        .contents()
-        .asScala
-        .map { s3Obj =>
-          val tag = s3Obj.eTag().filterNot(_ == '"')
-          Remote(s3Obj.key(), tag)
-        }
-        .toList
-    )
+    for {
+      iterObjs <- IO(client.listObjects(req).contents().asScala.toList)
+      is <- iterObjs.traverse { s3Obj =>
+        Md5.fromS3Etag(s3Obj.eTag()).map(md5 => Remote(s3Obj.key(), md5))
+      }
+    } yield is
   }
 
   def play(a: Action): IO[Unit] = a match {

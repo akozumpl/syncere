@@ -31,7 +31,7 @@ object Engine {
   def actions(i: Intels): List[Action] =
     i.intels
       .map {
-        case Full(l, r) if (l.tag.stringDigest != r.tag) =>
+        case Full(l, r) if (l.tag != r.tag) =>
           Upload(l.key)
         case Local(k, _, _) =>
           Upload(k)
