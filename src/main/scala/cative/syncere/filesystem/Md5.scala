@@ -1,11 +1,9 @@
 package cative.syncere.filesystem
 
 import java.io.FileInputStream
-import java.math.BigInteger
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
-import java.time.Instant
 
 import scala.util.Try
 import cats.Show
@@ -26,10 +24,12 @@ object Md5 {
       _ <- IO.raiseUnless(etag.endsWith("\""))(err)
       stripped = etag.drop(1).dropRight(1)
       _ <- IO.raiseUnless(stripped.length == 32)(err)
-      bytes <- IO
-        .fromTry(Try(new BigInteger(stripped, 16)))
-        .map(_.toByteArray.toList)
-    } yield Md5(bytes)
+      bytes <- IO.fromTry(
+        Try(
+          stripped.grouped(2).map(s => Integer.parseUnsignedInt(s, 16).toByte)
+        )
+      )
+    } yield Md5(bytes.toList)
   }
 
   def path(path: Path): IO[Md5] =
@@ -42,7 +42,6 @@ object Md5 {
         md.update(bytes)
         md.digest()
       }
-      at <- IO.realTimeInstant
     } yield Md5(digest.toList)
 
   def resourcePath(resourceName: String): IO[Md5] =

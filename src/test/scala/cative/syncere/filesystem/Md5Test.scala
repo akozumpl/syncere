@@ -10,7 +10,7 @@ import weaver.SimpleIOSuite
 
 object Md5Test extends SimpleIOSuite {
   private val ResourceName = "/milan.txt"
-  private val ExpectedMd5 = "048ace47d7136fff5004dcb60dfe4e0a"
+  private val ExpectedMd5 = "f63f1693a02dd66b3f24db4beb28fb9f"
 
   def resourcePath(resourceName: String): IO[Path] =
     IO(Paths.get(getClass.getResource(resourceName).toURI()))
@@ -22,7 +22,7 @@ object Md5Test extends SimpleIOSuite {
   test("Loads from an S3 tag.") {
     for {
       regularTag <- Md5.resourcePath(ResourceName)
-      s3tag1 <- Md5.fromS3Etag(""""048ace47d7136fff5004dcb60dfe4e0a"""")
+      s3tag1 <- Md5.fromS3Etag(""""f63f1693a02dd66b3f24db4beb28fb9f"""")
       s3tag2 <- Md5.fromS3Etag(""""deeece47d7136fff5004dcb60dfe4e0a"""")
     } yield expect(s3tag1 == regularTag) and expect(s3tag2 != regularTag)
   }
