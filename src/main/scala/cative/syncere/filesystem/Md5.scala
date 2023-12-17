@@ -8,6 +8,7 @@ import java.security.MessageDigest
 import scala.util.Try
 import cats.Show
 import cats.effect.IO
+import cats.syntax.monadError._
 
 case class Md5(digest: List[Byte]) {
   def stringDigest: String =
@@ -23,13 +24,20 @@ object Md5 {
       _ <- IO.raiseUnless(etag.startsWith("\""))(err)
       _ <- IO.raiseUnless(etag.endsWith("\""))(err)
       stripped = etag.drop(1).dropRight(1)
-      _ <- IO.raiseUnless(stripped.length == 32)(err)
-      bytes <- IO.fromTry(
-        Try(
-          stripped.grouped(2).map(s => Integer.parseUnsignedInt(s, 16).toByte)
-        )
-      )
-    } yield Md5(bytes.toList)
+      res <- fromString(stripped).adaptError { case _ => err }
+    } yield res
+  }
+
+  def fromString(s: String): IO[Md5] =
+    IO.fromTry(Try(fromStringUnsafe(s)))
+
+  // can throw
+  def fromStringUnsafe(s: String): Md5 = {
+    val err = Md5Error(s"Invalid md5 string: $s")
+    if (s.length != 32) {
+      throw err
+    }
+    Md5(s.grouped(2).map(s => Integer.parseUnsignedInt(s, 16).toByte).toList)
   }
 
   def path(path: Path): IO[Md5] =
