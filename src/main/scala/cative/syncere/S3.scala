@@ -3,6 +3,7 @@ package cative.syncere
 import java.nio.file.Path
 
 import scala.jdk.CollectionConverters.*
+import cats.data.Validated
 import cats.effect.IO
 import cats.effect.std.Console
 import cats.syntax.option._
@@ -54,7 +55,7 @@ class S3(client: S3Client, bucket: String) {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     for {
       iterObjs <- IO(client.listObjects(req).contents().asScala.toList)
-      is <- iterObjs.traverse(_.toRemote)
+      is <- iterObjs.traverse(_.toRemote.toIO)
     } yield is
   }
 
@@ -77,8 +78,9 @@ class S3(client: S3Client, bucket: String) {
 }
 
 extension (s3Obj: S3Object) {
-  def toRemote: IO[Remote] =
+  def toRemote: Validated[Throwable, Remote] =
     Md5
       .fromS3Etag(s3Obj.eTag())
       .map(md5 => Remote(s3Obj.key(), md5, s3Obj.lastModified))
+
 }

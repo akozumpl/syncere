@@ -7,6 +7,7 @@ import java.security.MessageDigest
 
 import scala.util.Try
 import cats.Show
+import cats.data.Validated
 import cats.effect.IO
 import cats.syntax.monadError._
 
@@ -18,18 +19,21 @@ case class Md5(digest: List[Byte]) {
 object Md5 {
   given Show[Md5] = Show.show(_.stringDigest)
 
-  def fromS3Etag(etag: String): IO[Md5] = {
+  type ValidatedMd5 = Validated[Md5Error, Md5]
+
+  def fromS3Etag(etag: String): ValidatedMd5 = {
     val err = Md5Error(s"Unexpected etag format: $etag")
-    for {
-      _ <- IO.raiseUnless(etag.startsWith("\""))(err)
-      _ <- IO.raiseUnless(etag.endsWith("\""))(err)
+    val either = for {
+      _ <- Either.cond(etag.startsWith("\""), (), err)
+      _ <- Either.cond(etag.endsWith("\""), (), err)
       stripped = etag.drop(1).dropRight(1)
-      res <- fromString(stripped).adaptError { case _ => err }
+      res <- fromString(stripped).toEither
     } yield res
+    Validated.fromEither(either)
   }
 
-  def fromString(s: String): IO[Md5] =
-    IO.fromTry(Try(fromStringUnsafe(s)))
+  def fromString(s: String): ValidatedMd5 =
+    Validated.catchOnly[Md5Error](fromStringUnsafe(s))
 
   // can throw
   def fromStringUnsafe(s: String): Md5 = {
