@@ -54,9 +54,7 @@ class S3(client: S3Client, bucket: String) {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     for {
       iterObjs <- IO(client.listObjects(req).contents().asScala.toList)
-      is <- iterObjs.traverse { s3Obj =>
-        Md5.fromS3Etag(s3Obj.eTag()).map(md5 => Remote(s3Obj.key(), md5))
-      }
+      is <- iterObjs.traverse(_.toRemote)
     } yield is
   }
 
@@ -76,4 +74,11 @@ class S3(client: S3Client, bucket: String) {
 
   def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())
 
+}
+
+extension (s3Obj: S3Object) {
+  def toRemote: IO[Remote] =
+    Md5
+      .fromS3Etag(s3Obj.eTag())
+      .map(md5 => Remote(s3Obj.key(), md5, s3Obj.lastModified))
 }

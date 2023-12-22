@@ -46,12 +46,12 @@ object EngineTest extends SimpleIOSuite {
 
   object local {
     val missing: Option[Local] = None
-    val present = Local(key, md5, time).some
+    val present = Local(key, md5, anInstant).some
   }
 
   object remote {
     val missing = None
-    val present = Remote(key, md5).some
+    val present = Remote(key, md5, anInstant).some
   }
 
   // Basic cases:
