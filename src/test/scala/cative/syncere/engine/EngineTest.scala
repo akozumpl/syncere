@@ -2,6 +2,7 @@ package cative.syncere.engine
 
 import java.time.Instant
 
+import scala.annotation.targetName
 import cats.data.NonEmptyList
 import cats.syntax.option._
 
@@ -14,10 +15,12 @@ import cative.syncere.meta._
 
 object EngineTest extends SimpleIOSuite {
 
+  private val HourSeconds = 3600
+
   val key = "fileio.mkv"
   val md5 = Md5.fromStringUnsafe("75d7a0c43d6e92130301bb29185e24f2")
   val changedMd5 = Md5.fromStringUnsafe("d4a01b26c18515fe71695a183a9dcfcb")
-  val time = Instant.parse("2030-12-03T10:15:30.00Z")
+  val anInstant = Instant.parse("2030-12-03T10:15:30.00Z")
 
   val download = Download(key)
   val upload = Upload(key)
@@ -32,9 +35,18 @@ object EngineTest extends SimpleIOSuite {
   }
 
   extension (maybeLocal: Option[Local]) {
+
     def :+(remote: Option[Remote]): Combined = Combined(maybeLocal, remote)
 
     def changed: Option[Local] = maybeLocal.map(_.copy(tag = changedMd5))
+
+    def newer: Option[Local] = maybeLocal.map { l =>
+      l.copy(lastChange = l.lastChange.plusSeconds(HourSeconds))
+    }
+
+    def older: Option[Local] = maybeLocal.map { l =>
+      l.copy(lastChange = l.lastChange.minusSeconds(HourSeconds))
+    }
   }
 
   case class Combined(local: Option[Local], remote: Option[Remote]) {
@@ -62,6 +74,14 @@ object EngineTest extends SimpleIOSuite {
 
   pureTest("new files are uploaded") {
     local.present :+ remote.missing :=> upload
+  }
+
+  pureTest("if local file is newer, it is uploaded") {
+    local.present.changed.newer :+ remote.present :=> upload
+  }
+
+  pureTest("if local file is older, it is downloaded over") {
+    local.present.changed.older :+ remote.present :=> download
   }
 
   // Dubious cases:

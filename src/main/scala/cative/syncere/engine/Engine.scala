@@ -32,10 +32,11 @@ object Engine {
     i.intels
       .map {
         case Full(l, r) if (l.tag != r.tag) =>
-          Upload(l.key)
+          if (r.lastChange.isAfter(l.lastChange)) Download(l.key)
+          else Upload(l.key)
         case Local(k, _, _) =>
           Upload(k)
-        case Remote(k, _) =>
+        case Remote(k, _, _) =>
           Download(k)
         case _ =>
           NoOp
