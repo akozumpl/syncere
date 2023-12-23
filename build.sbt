@@ -21,6 +21,7 @@ lazy val root = (project in file("."))
       "org.slf4j" % "slf4j-simple" % Slf4jVersion,
       "software.amazon.awssdk" % "s3" % "2.20.116",
       // Scala deps, working in native
+      "com.monovore" %% "decline" % "2.4.1",
       "io.circe" %% "circe-core" % CirceVersion,
       "io.circe" %% "circe-generic" % CirceVersion,
       "io.circe" %% "circe-parser" % CirceVersion,
