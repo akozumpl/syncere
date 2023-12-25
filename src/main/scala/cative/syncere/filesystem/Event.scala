@@ -2,7 +2,6 @@ package cative.syncere.filesystem
 
 import java.nio.file.Path
 import java.nio.file.WatchEvent
-import java.nio.file.WatchKey
 
 import cats.data.Validated
 import cats.syntax.either._

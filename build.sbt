@@ -8,13 +8,14 @@ lazy val root = (project in file("."))
     name := "syncere",
     organization := "org.cative",
     version := "0.1-SNAPSHOT",
-    scalaVersion := "3.3.0",
+    scalaVersion := "3.3.1",
     scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
       "-language:implicitConversions",
       "-language:postfixOps",
-      "-Wvalue-discard"
+      "-Wvalue-discard",
+      "-Wunused:all"
     ),
     libraryDependencies ++= Seq(
       // Java deps (no native equivalent)

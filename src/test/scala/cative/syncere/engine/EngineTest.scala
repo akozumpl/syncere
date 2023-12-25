@@ -2,7 +2,6 @@ package cative.syncere.engine
 
 import java.time.Instant
 
-import scala.annotation.targetName
 import cats.data.NonEmptyList
 import cats.syntax.option._
 

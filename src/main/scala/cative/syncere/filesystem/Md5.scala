@@ -5,7 +5,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 
-import scala.util.Try
 import cats.Show
 import cats.data.Validated
 import cats.effect.IO

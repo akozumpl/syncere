@@ -1,6 +1,5 @@
 package cative.syncere.meta
 
-import cative.syncere.meta.Intel
 import cative.syncere.meta.KeyEntry.Key
 
 extension [I <: Intel](l: List[I]) {

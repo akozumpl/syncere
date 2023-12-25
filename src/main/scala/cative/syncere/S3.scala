@@ -1,37 +1,23 @@
 package cative.syncere
 
-import java.nio.file.Path
-
 import scala.jdk.CollectionConverters.*
 import cats.data.Validated
 import cats.effect.IO
 import cats.effect.std.Console
-import cats.syntax.option._
 import cats.syntax.show._
-import cats.syntax.traverse._
+import cats.syntax.traverse.*
 
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
-import software.amazon.awssdk.core.ResponseBytes
-import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.services.s3.model.GetObjectResponse
-import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest
-import software.amazon.awssdk.services.s3.model.GetObjectTaggingResponse
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest
-import software.amazon.awssdk.services.s3.model.ListObjectsResponse
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
-import software.amazon.awssdk.services.s3.model.Tag
 
 import cative.syncere.engine.Action
 import cative.syncere.engine.Download
 import cative.syncere.engine.Upload
 import cative.syncere.filesystem.Md5
-import meta.KeyEntry
-import meta.Intels
 import meta.Remote
 
 object S3 {

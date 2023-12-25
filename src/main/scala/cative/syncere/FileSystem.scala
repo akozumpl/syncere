@@ -5,14 +5,11 @@ import java.nio.file.Path
 import java.time.Instant
 
 import scala.jdk.CollectionConverters._
-import scala.jdk.StreamConverters._
 import cats.effect.IO
-import cats.instances.string._
 import cats.syntax.traverse._
 
 import cative.syncere.filesystem.Md5
 import cative.syncere.meta.Db
-import cative.syncere.meta.Intels
 import cative.syncere.meta.KeyEntry
 import cative.syncere.meta.Local
 

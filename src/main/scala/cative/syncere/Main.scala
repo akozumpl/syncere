@@ -1,24 +1,18 @@
 package cative.syncere
 
 import java.nio.file.FileSystems
-import java.nio.file.FileVisitor
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.WatchEvent
 import java.nio.file.WatchService
 import java.nio.file.{StandardWatchEventKinds => K}
-import java.util.concurrent.TimeUnit
 
-import scala.jdk.CollectionConverters._
-import scala.jdk.StreamConverters._
+import scala.jdk.CollectionConverters.*
 import cats.Show
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
-import cats.syntax.show._
+import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
-import cative.syncere.filesystem.Md5
+import cative.syncere.filesystem.Event
 import cative.syncere.given
 import cative.syncere.meta._
 

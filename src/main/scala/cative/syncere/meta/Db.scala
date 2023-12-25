@@ -1,7 +1,5 @@
 package cative.syncere.meta
 
-import java.nio.file.Path
-
 import cats.Show
 import cats.effect.IO
 import cats.syntax.show._

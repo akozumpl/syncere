@@ -8,7 +8,9 @@ import com.monovore.decline.*
 case class Cli(
     wetRun: Boolean,
     once: Boolean
-)
+) {
+  def isForever: Boolean = !once
+}
 
 object Cli {
   val wetRun =
