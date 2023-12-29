@@ -24,12 +24,12 @@ object Engine {
         case _                  => None
       }
       .flatten
-      .toList
-    Intels(is)
+      .map(i => i.key -> i)
+    Intels(is.toMap)
   }
 
   def actions(i: Intels): List[Action] =
-    i.intels
+    i.intels.values
       .map {
         case Full(l, r) if (l.tag != r.tag) =>
           if (r.lastChange.isAfter(l.lastChange)) Download(l.key)
