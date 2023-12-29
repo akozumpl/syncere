@@ -58,5 +58,5 @@ case class Remote(key: Key, tag: Md5, lastChange: Instant) extends Intel
 
 object Remote {
   given Show[Remote] =
-    Show.show(r => show"Remote intel: ${r.key} ${r.tag}")
+    Show.show(r => show"Remote intel: ${r.key} ${r.tag} ${r.lastChange}")
 }

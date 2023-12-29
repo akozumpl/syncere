@@ -66,8 +66,6 @@ object Main extends IOApp {
       localDb <- FileSystem.fetchIntels
       unified = Engine.unite(localDb, remoteDb)
       actions = Engine.actions(unified)
-      _ <- printTagged("remote state", remoteDb)
-      _ <- printTagged("localState", localDb)
       _ <- printTagged("unified state", unified)
       _ <- printTagged("actions", actions)
 
