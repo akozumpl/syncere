@@ -2,7 +2,6 @@ package cative.syncere.meta
 
 import cats.Show
 import cats.syntax.contravariant._
-import cats.syntax.show._
 
 import cative.syncere.given
 import cative.syncere.meta.KeyEntry.Key

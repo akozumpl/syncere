@@ -27,11 +27,12 @@ object Event {
         ).asLeft
     }
 
-  def decodeWatchEvent(
+  def decodeWatchEvent(root: Path)(
       watchEvent: WatchEvent[_]
   ): Validated[WatchServiceError, Event] = {
     val event = for {
-      key <- decodePath(watchEvent)
+      relativeKey <- decodePath(watchEvent)
+      key = root.resolve(relativeKey)
       event <- watchEvent.kind().name() match {
         case "ENTRY_CREATE" =>
           Creation(key).asRight

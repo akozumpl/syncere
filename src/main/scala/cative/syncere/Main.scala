@@ -27,7 +27,8 @@ object Main extends IOApp {
   def poll(ws: WatchService, cli: Cli, s3: S3)(previous: Intels): IO[Intels] =
     for {
       key <- IO(ws.take())
-      events = key.pollEvents.asScala.toList.map(Event.decodeWatchEvent)
+      events = key.pollEvents.asScala.toList
+        .map(Event.decodeWatchEvent(Config.SyncPath))
       next <- events.foldLeft(IO.pure(previous)) {
         case (ioIntels, validatedEvent) =>
           validatedEvent match {
