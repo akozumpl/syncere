@@ -8,7 +8,9 @@ import scala.jdk.CollectionConverters._
 import cats.effect.IO
 import cats.syntax.traverse._
 
+import cative.syncere.filesystem.Creation
 import cative.syncere.filesystem.Md5
+import cative.syncere.filesystem.Modification
 import cative.syncere.meta.Db
 import cative.syncere.meta.KeyEntry
 import cative.syncere.meta.Local
@@ -66,6 +68,9 @@ object FileSystem {
       iter <- walkSyncFiles
       list <- iter.toList.traverse(localIntel)
     } yield list
+
+  def intelForEvent(event: Creation | Modification): IO[Local] =
+    localIntel(event.key)
 
   def keyToPath(key: KeyEntry.Key): Path =
     Config.SyncPath.resolve(key)

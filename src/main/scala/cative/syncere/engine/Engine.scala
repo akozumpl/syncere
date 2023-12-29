@@ -28,6 +28,18 @@ object Engine {
     Intels(is.toMap)
   }
 
+  def updateLocal(intels: Intels, local: Local): Intels =
+    intels.updateWith(local.key) {
+      case Some(oldIntel) =>
+        oldIntel match {
+          case Full(l, r) => Full(local, r)
+          case r: Remote  => Full(local, r)
+          case _          => local
+        }
+      case None =>
+        local
+    }
+
   def actions(i: Intels): List[Action] =
     i.intels.values
       .map {
