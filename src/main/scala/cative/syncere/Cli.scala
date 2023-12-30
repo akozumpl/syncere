@@ -14,7 +14,7 @@ case class Cli(
 
 object Cli {
   val wetRun =
-    Opts.flag("wetRun", "Actually execute any transfers.").orFalse
+    Opts.flag("wetRun", "Actually execute any transfers.", "w").orFalse
   val once =
     Opts
       .flag(
