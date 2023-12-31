@@ -9,13 +9,13 @@ import cats.syntax.either._
 import cative.syncere.meta.KeyEntry.Key
 
 sealed trait Event {
-  def key: Key = path.toString
+  def key: Key
   def path: Path
 }
 
-case class Creation(path: Path) extends Event
-case class Deletion(path: Path) extends Event
-case class Modification(path: Path) extends Event
+case class Creation(key: Key, path: Path) extends Event
+case class Deletion(key: Key, path: Path) extends Event
+case class Modification(key: Key, path: Path) extends Event
 
 object Event {
 
@@ -34,18 +34,19 @@ object Event {
       watchEvent: WatchEvent[_]
   ): Validated[WatchServiceError, Event] = {
     val event = for {
-      relativeKey <- decodePath(watchEvent)
-      key = root.resolve(relativeKey)
+      relativePath <- decodePath(watchEvent)
+      key = relativePath.toString
+      path = root.resolve(relativePath)
       event <- watchEvent.kind().name() match {
         case "ENTRY_CREATE" =>
-          Creation(key).asRight
+          Creation(key, path).asRight
         case "ENTRY_DELETE" =>
-          Deletion(key).asRight
+          Deletion(key, path).asRight
         case "ENTRY_MODIFY" =>
-          Modification(key).asRight
+          Modification(key, path).asRight
         case name =>
           WatchServiceError(
-            s"Failed to decode event type for $key: $name."
+            s"Failed to decode event type for $path: $name."
           ).asLeft
       }
     } yield event

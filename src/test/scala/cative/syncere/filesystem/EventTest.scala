@@ -11,16 +11,19 @@ import weaver.SimpleIOSuite
 
 object EventTest extends SimpleIOSuite {
 
+  val AKey = "convinced/enthusiasts"
+
   val event = new WatchEvent[Path] {
     override def kind(): Kind[Path] = K.ENTRY_MODIFY
     override def count(): Int = 1
-    override def context(): Path = Path.of("convinced/enthusiasts")
+    override def context(): Path =
+      Path.of(AKey)
   }
 
   pureTest("Decodes a WatchService event.") {
     expect(
       Event.decodeWatchEvent(Path.of("/created/by"))(event) == Valid(
-        Modification(Path.of("/created/by/convinced/enthusiasts"))
+        Modification(AKey, Path.of("/created/by/convinced/enthusiasts"))
       )
     )
   }
