@@ -43,15 +43,20 @@ object Engine {
   def actions(i: Intels): List[Action] =
     i.intels.values
       .map {
-        case Full(l, r) if (l.tag != r.tag) =>
-          if (r.lastChange.isAfter(l.lastChange)) Download(l.key)
-          else Upload(l.key)
+        case Full(l, r) =>
+          if (l.tag != r.tag) {
+            if (r.lastChange.isAfter(l.lastChange)) Download(l.key)
+            else Upload(l.key)
+          } else NoOp
+        case FullLocallyDeleted(d, r) =>
+          if (d.seen.isAfter(r.lastChange)) Delete(d.key)
+          else Download(d.key)
         case Local(k, _, _) =>
           Upload(k)
+        case LocallyDeleted(key, _) =>
+          Delete(key)
         case Remote(k, _, _) =>
           Download(k)
-        case _ =>
-          NoOp
       }
       .filter(_ != NoOp)
       .toList

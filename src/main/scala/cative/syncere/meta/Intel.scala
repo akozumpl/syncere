@@ -17,12 +17,14 @@ object Intel {
   given Show[Intel] = Show.show {
     case f: Full =>
       f.show
+    case f: FullLocallyDeleted =>
+      f.show
     case l: Local =>
       l.show
+    case d: LocallyDeleted =>
+      d.show
     case r: Remote =>
       r.show
-    case i =>
-      s"Intel(${i.key})"
   }
 }
 
@@ -33,6 +35,18 @@ case class Full(local: Local, remote: Remote) extends Intel {
 object Full {
   given Show[Full] =
     Show.show(f => show"Full intel: ${f.local} / ${f.remote}")
+}
+
+case class FullLocallyDeleted(locallyDeleted: LocallyDeleted, remote: Remote)
+    extends Intel {
+  override def key: Key = locallyDeleted.key
+}
+
+object FullLocallyDeleted {
+  given Show[FullLocallyDeleted] =
+    Show.show(f =>
+      show"Local deletion with existing remote intel: ${f.locallyDeleted} / ${f.remote}"
+    )
 }
 
 case class Local(
@@ -48,11 +62,12 @@ object Local {
     )
 }
 
-/** Remembers state from the last run of the service.
-  *
-  * Useful to tell what files have changed while the service was shut down.
-  */
-case class Recall(key: Key, tag: Tag, time: Instant) extends Intel
+case class LocallyDeleted(key: Key, seen: Instant) extends Intel
+
+object LocallyDeleted {
+  given Show[LocallyDeleted] =
+    Show.show(l => show"Locally deleted intel: ${l.key} witnessed ${l.seen}.")
+}
 
 case class Remote(key: Key, tag: Md5, lastChange: Instant) extends Intel
 
