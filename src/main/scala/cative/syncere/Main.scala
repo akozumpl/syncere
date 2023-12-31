@@ -40,14 +40,19 @@ object Main extends IOApp {
                     intel <- FileSystem.intelForEvent(e)
                     intels <- ioIntels
                   } yield Engine.updateLocal(intels, intel)
-                case Deletion(key) =>
-                  ioIntels <* con.errorln(s"Deletion of $key ignored.")
+                case d: Deletion =>
+                  for {
+                    d <- FileSystem.intelForDeletion(d)
+                    intels <- ioIntels
+                  } yield Engine.updateLocallyDeleted(intels, d)
               }
           }
       }
       _ <- IO(key.reset())
+      _ <- printTagged("next state", next)
       actions = Engine.actions(next)
       _ <- printTagged("actions", actions)
+      _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
     } yield next
 
   def printShow[A: Show](a: A): IO[Unit] =

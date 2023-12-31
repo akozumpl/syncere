@@ -9,11 +9,13 @@ import cats.effect.IO
 import cats.syntax.traverse._
 
 import cative.syncere.filesystem.Creation
+import cative.syncere.filesystem.Deletion
 import cative.syncere.filesystem.Md5
 import cative.syncere.filesystem.Modification
 import cative.syncere.meta.Db
 import cative.syncere.meta.KeyEntry
 import cative.syncere.meta.Local
+import cative.syncere.meta.LocallyDeleted
 
 object FileSystem {
   private val walkSyncFiles: IO[List[Path]] = for {
@@ -71,6 +73,9 @@ object FileSystem {
 
   def intelForEvent(event: Creation | Modification): IO[Local] =
     localIntel(event.path)
+
+  def intelForDeletion(deletion: Deletion): IO[LocallyDeleted] =
+    IO.realTimeInstant.map(seen => LocallyDeleted(deletion.key, seen))
 
   def keyToPath(key: KeyEntry.Key): Path =
     Config.SyncPath.resolve(key)

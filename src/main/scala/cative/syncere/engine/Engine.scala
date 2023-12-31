@@ -40,6 +40,18 @@ object Engine {
         local
     }
 
+  def updateLocallyDeleted(intels: Intels, deleted: LocallyDeleted): Intels =
+    intels.updateWith(deleted.key) {
+      case Some(oldIntel) =>
+        oldIntel match {
+          case Full(l, r) => FullLocallyDeleted(deleted, r)
+          case r: Remote  => FullLocallyDeleted(deleted, r)
+          case _          => deleted
+        }
+      case None =>
+        deleted
+    }
+
   def actions(i: Intels): List[Action] =
     i.intels.values
       .map {
