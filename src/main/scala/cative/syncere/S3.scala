@@ -9,14 +9,13 @@ import cats.syntax.traverse.*
 
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Object
 
-import cative.syncere.engine.Action
-import cative.syncere.engine.Download
-import cative.syncere.engine.Upload
+import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
 import meta.Remote
 
@@ -46,17 +45,23 @@ class S3(client: S3Client, bucket: String) {
   }
 
   def play(a: Action): IO[Unit] = a match {
+    case Delete(key) =>
+      val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
+      con.println(show" --- deleting $key") >> IO(
+        client.deleteObject(req)
+      ).as(())
     case Download(key) =>
       val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- downloading $key") >> IO(
         client.getObject(req, FileSystem.keyToPath(key))
       ).as(())
+    case NoOp =>
+      IO.unit
     case Upload(key) =>
       val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- uploading $key") >> IO(
         client.putObject(req, FileSystem.keyToPath(key))
       ).as(())
-    case _ => IO.unit
   }
 
   def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())
