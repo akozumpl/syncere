@@ -70,7 +70,7 @@ object FileSystem {
     } yield list
 
   def intelForEvent(event: Creation | Modification): IO[Local] =
-    localIntel(event.key)
+    localIntel(event.path)
 
   def keyToPath(key: KeyEntry.Key): Path =
     Config.SyncPath.resolve(key)

@@ -6,13 +6,16 @@ import java.nio.file.WatchEvent
 import cats.data.Validated
 import cats.syntax.either._
 
+import cative.syncere.meta.KeyEntry.Key
+
 sealed trait Event {
-  def key: Path
+  def key: Key = path.toString
+  def path: Path
 }
 
-case class Creation(key: Path) extends Event
-case class Deletion(key: Path) extends Event
-case class Modification(key: Path) extends Event
+case class Creation(path: Path) extends Event
+case class Deletion(path: Path) extends Event
+case class Modification(path: Path) extends Event
 
 object Event {
 
