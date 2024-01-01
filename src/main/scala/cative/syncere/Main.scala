@@ -15,10 +15,7 @@ import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
-import cative.syncere.filesystem.Creation
-import cative.syncere.filesystem.Deletion
 import cative.syncere.filesystem.Event
-import cative.syncere.filesystem.Modification
 import cative.syncere.given
 
 object Main extends IOApp {
@@ -34,18 +31,10 @@ object Main extends IOApp {
           validatedEvent match {
             case Invalid(err) => ioIntels <* con.errorln(err)
             case Valid(event) =>
-              event match {
-                case e @ (_: Creation | _: Modification) =>
-                  for {
-                    intel <- FileSystem.intelForEvent(e)
-                    intels <- ioIntels
-                  } yield Engine.updateLocal(intels, intel)
-                case d: Deletion =>
-                  for {
-                    d <- FileSystem.intelForDeletion(d)
-                    intels <- ioIntels
-                  } yield Engine.updateLocallyDeleted(intels, d)
-              }
+              for {
+                intel <- FileSystem.intelForEvent(event)
+                intels <- ioIntels
+              } yield intels.absorb(intel)
           }
       }
       _ <- IO(key.reset())

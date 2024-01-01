@@ -3,11 +3,16 @@ package cative.syncere.engine
 import cats.Show
 import cats.syntax.contravariant._
 
-import cative.syncere.given
+import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.meta.KeyEntry.Key
 import cative.syncere.meta.*
 
 case class Intels(intels: Map[Key, Intel]) {
+  def absorb(i: FreshIntel): Intels = i match {
+    case l: Local           => Engine.updateLocal(this, l)
+    case ld: LocallyDeleted => Engine.updateLocallyDeleted(this, ld)
+  }
+
   def updateWith(key: Key)(f: Option[Intel] => Intel): Intels = {
     val updated = f(intels.get(key))
     Intels(intels.updated(key, updated))
@@ -16,4 +21,6 @@ case class Intels(intels: Map[Key, Intel]) {
 
 object Intels {
   given Show[Intels] = Show[List[Intel]].contramap(_.intels.values.toList)
+
+  type FreshIntel = Local | LocallyDeleted
 }

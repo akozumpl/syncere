@@ -10,6 +10,7 @@ import cats.syntax.traverse._
 
 import cative.syncere.filesystem.Creation
 import cative.syncere.filesystem.Deletion
+import cative.syncere.filesystem.Event
 import cative.syncere.filesystem.Md5
 import cative.syncere.filesystem.Modification
 import cative.syncere.meta.Db
@@ -71,11 +72,12 @@ object FileSystem {
       list <- iter.toList.traverse(localIntel)
     } yield list
 
-  def intelForEvent(event: Creation | Modification): IO[Local] =
-    localIntel(event.path)
-
-  def intelForDeletion(deletion: Deletion): IO[LocallyDeleted] =
-    IO.realTimeInstant.map(seen => LocallyDeleted(deletion.key, seen))
+  def intelForEvent(event: Event): IO[Local | LocallyDeleted] = event match {
+    case e @ (_: Creation | _: Modification) =>
+      localIntel(event.path)
+    case Deletion(key, _) =>
+      IO.realTimeInstant.map(seen => LocallyDeleted(key, seen))
+  }
 
   def keyToPath(key: KeyEntry.Key): Path =
     Config.SyncPath.resolve(key)

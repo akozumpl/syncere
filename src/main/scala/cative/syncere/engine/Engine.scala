@@ -28,7 +28,7 @@ object Engine {
     Intels(is.toMap)
   }
 
-  def updateLocal(intels: Intels, local: Local): Intels =
+  private[engine] def updateLocal(intels: Intels, local: Local): Intels =
     intels.updateWith(local.key) {
       case Some(oldIntel) =>
         oldIntel match {
@@ -40,7 +40,10 @@ object Engine {
         local
     }
 
-  def updateLocallyDeleted(intels: Intels, deleted: LocallyDeleted): Intels =
+  private[engine] def updateLocallyDeleted(
+      intels: Intels,
+      deleted: LocallyDeleted
+  ): Intels =
     intels.updateWith(deleted.key) {
       case Some(oldIntel) =>
         oldIntel match {
