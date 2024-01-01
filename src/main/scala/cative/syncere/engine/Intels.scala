@@ -9,6 +9,10 @@ import cative.syncere.meta.KeyEntry.Key
 import cative.syncere.meta.*
 
 case class Intels(intels: Map[Key, Intel]) {
+  val :+ = absorb
+
+  def actions = Engine.actions(this)
+
   def absorb(i: FreshIntel): Intels = i match {
     case l: Local           => Engine.updateLocal(this, l)
     case ld: LocallyDeleted => Engine.updateLocallyDeleted(this, ld)

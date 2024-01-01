@@ -27,8 +27,8 @@ object EngineTest extends SimpleIOSuite with TestValues {
   }
 
   extension (maybeLocal: Option[Local]) {
-
-    def :+(remote: Option[Remote]): Combined = Combined(maybeLocal, remote)
+    def :+(maybeRemote: Option[Remote]): Intels =
+      Intels.fresh(List(maybeLocal, maybeRemote).flatten)
 
     def changed: Option[Local] = maybeLocal.map(_.copy(tag = changedMd5))
 
@@ -41,10 +41,9 @@ object EngineTest extends SimpleIOSuite with TestValues {
     }
   }
 
-  case class Combined(local: Option[Local], remote: Option[Remote]) {
+  extension (intels: Intels) {
     def :=>(action: Action)(implicit loc: SourceLocation): Expectations = {
-      val united = Intels.fresh(List(local, remote).flatten)
-      expect(Engine.actions(united) == List(action)).traceTo(loc)
+      expect(intels.actions == List(action)).traceTo(loc)
     }
   }
 
