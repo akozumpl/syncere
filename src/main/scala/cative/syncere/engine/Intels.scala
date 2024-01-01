@@ -4,6 +4,7 @@ import cats.Show
 import cats.syntax.contravariant._
 
 import cative.syncere.engine.Intels.FreshIntel
+import cative.syncere.given
 import cative.syncere.meta.KeyEntry.Key
 import cative.syncere.meta.*
 

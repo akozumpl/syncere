@@ -14,8 +14,8 @@ import cative.syncere.filesystem.Md5
 import cative.syncere.meta._
 
 object EngineTest extends SimpleIOSuite with TestValues {
-  val download = Download(key)
-  val upload = Upload(key)
+  val download = Download(key1)
+  val upload = Upload(key1)
 
   extension (e: Expectations) {
 
@@ -50,12 +50,12 @@ object EngineTest extends SimpleIOSuite with TestValues {
 
   object local {
     val missing: Option[Local] = None
-    val present = Local(key, md5, anInstant).some
+    val present = Local(key1, md5, anInstant).some
   }
 
   object remote {
     val missing = None
-    val present = Remote(key, md5, anInstant).some
+    val present = Remote(key1, md5, anInstant).some
   }
 
   // Basic cases:
