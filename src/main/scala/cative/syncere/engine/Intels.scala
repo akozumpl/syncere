@@ -1,10 +1,11 @@
-package cative.syncere.meta
+package cative.syncere.engine
 
 import cats.Show
 import cats.syntax.contravariant._
 
 import cative.syncere.given
 import cative.syncere.meta.KeyEntry.Key
+import cative.syncere.meta.*
 
 case class Intels(intels: Map[Key, Intel]) {
   def updateWith(key: Key)(f: Option[Intel] => Intel): Intels = {

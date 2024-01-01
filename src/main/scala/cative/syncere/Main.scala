@@ -14,12 +14,12 @@ import cats.effect.IOApp
 import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
+import cative.syncere.engine.Intels
 import cative.syncere.filesystem.Creation
 import cative.syncere.filesystem.Deletion
 import cative.syncere.filesystem.Event
 import cative.syncere.filesystem.Modification
 import cative.syncere.given
-import cative.syncere.meta.*
 
 object Main extends IOApp {
   val con = IO.consoleForIO
