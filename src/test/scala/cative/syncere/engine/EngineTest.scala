@@ -50,7 +50,7 @@ object EngineTest extends SimpleIOSuite {
 
   case class Combined(local: Option[Local], remote: Option[Remote]) {
     def :=>(action: Action)(implicit loc: SourceLocation): Expectations = {
-      val united = Engine.unite(local.toList, remote.toList)
+      val united = Intels.fresh(List(local, remote).flatten)
       expect(Engine.actions(united) == List(action)).traceTo(loc)
     }
   }

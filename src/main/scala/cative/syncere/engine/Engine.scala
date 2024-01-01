@@ -12,22 +12,6 @@ object Engine {
       result: Db
   )
 
-  def unite(locals: List[Local], remotes: List[Remote]): Intels = {
-    val localMap = locals.keyMap
-    val remoteMap = remotes.keyMap
-    val is = (localMap.keys ++ remoteMap.keys).toSet
-      .map(key => (localMap.get(key), remoteMap.get(key)))
-      .map {
-        case (Some(l), Some(r)) => Full(l, r).some
-        case (Some(l), None)    => l.some
-        case (None, Some(r))    => r.some
-        case _                  => None
-      }
-      .flatten
-      .map(i => i.key -> i)
-    Intels(is.toMap)
-  }
-
   private[engine] def updateLocal(intels: Intels, local: Local): Intels =
     intels.updateWith(local.key) {
       case Some(oldIntel) =>
@@ -53,6 +37,18 @@ object Engine {
         }
       case None =>
         deleted
+    }
+
+  private[engine] def updateRemote(intels: Intels, remote: Remote): Intels =
+    intels.updateWith(remote.key) {
+      case Some(oldIntel) =>
+        oldIntel match {
+          case Full(l, r) => Full(l, remote)
+          case l: Local   => Full(l, remote)
+          case _          => remote
+        }
+      case None =>
+        remote
     }
 
   def actions(i: Intels): List[Action] =

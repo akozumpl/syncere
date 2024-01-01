@@ -11,6 +11,7 @@ case class Intels(intels: Map[Key, Intel]) {
   def absorb(i: FreshIntel): Intels = i match {
     case l: Local           => Engine.updateLocal(this, l)
     case ld: LocallyDeleted => Engine.updateLocallyDeleted(this, ld)
+    case r: Remote          => Engine.updateRemote(this, r)
   }
 
   def updateWith(key: Key)(f: Option[Intel] => Intel): Intels = {
@@ -22,5 +23,11 @@ case class Intels(intels: Map[Key, Intel]) {
 object Intels {
   given Show[Intels] = Show[List[Intel]].contramap(_.intels.values.toList)
 
-  type FreshIntel = Local | LocallyDeleted
+  type FreshIntel = Local | LocallyDeleted | Remote
+
+  val empty: Intels = Intels(Map.empty)
+
+  def fresh(freshIntels: List[FreshIntel]): Intels =
+    freshIntels.foldLeft(empty) { case (i, fi) => i.absorb(fi) }
+
 }

@@ -58,7 +58,7 @@ object Main extends IOApp {
 
       remoteDb <- s3.fetchIntels
       localDb <- FileSystem.fetchIntels
-      unified = Engine.unite(localDb, remoteDb)
+      unified = Intels.fresh(localDb ++ remoteDb)
       actions = Engine.actions(unified)
       _ <- printTagged("unified state", unified)
       _ <- printTagged("actions", actions)
