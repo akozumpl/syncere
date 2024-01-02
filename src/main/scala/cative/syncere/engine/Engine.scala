@@ -16,9 +16,10 @@ object Engine {
     intels.updateWith(local.key) {
       case Some(oldIntel) =>
         oldIntel match {
-          case Full(l, r) => Full(local, r)
-          case r: Remote  => Full(local, r)
-          case _          => local
+          case Full(l, r)                => Full(local, r)
+          case FullLocallyDeleted(ld, r) => Full(local, r)
+          case r: Remote                 => Full(local, r)
+          case _                         => local
         }
       case None =>
         local

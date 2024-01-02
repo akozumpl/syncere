@@ -31,7 +31,7 @@ object EngineTest extends SimpleIOSuite with TestValues {
 
   extension (left: Option[FreshIntel]) {
     def :+(right: Option[FreshIntel]): Intels =
-      Intels.fresh(List(left, right).flatten)
+      Intels.empty :+ left :+ right
   }
 
   extension (maybeLocal: Option[Local]) {
@@ -60,8 +60,11 @@ object EngineTest extends SimpleIOSuite with TestValues {
   }
 
   extension (intels: Intels) {
+    def :+(intel: Option[FreshIntel]): Intels = intels.absorbAll(intel.toList)
+
     def :=>(action: Action)(implicit loc: SourceLocation): Expectations = {
-      expect(intels.actions == List(action)).traceTo(loc)
+      val expectedActions = if (action == NoOp) List.empty else List(action)
+      expect(intels.actions == expectedActions).traceTo(loc)
     }
   }
 
@@ -78,42 +81,46 @@ object EngineTest extends SimpleIOSuite with TestValues {
 
   // Basic cases:
 
-  pureTest("missing files are downloaded") {
+  pureTest("Missing files are downloaded.") {
     local.missing :+ remote.present :=> download
   }
 
-  pureTest("new files are uploaded") {
+  pureTest("New files are uploaded.") {
     local.present :+ remote.missing :=> upload
   }
 
-  pureTest("if local file is newer, it is uploaded") {
+  pureTest("If local file is newer, it is uploaded.") {
     local.present.changed.newer :+ remote.present :=> upload
   }
 
-  pureTest("if local file is older, it is downloaded over") {
+  pureTest("If local file is older, it is downloaded.") {
     local.present.changed.older :+ remote.present :=> download
   }
 
   pureTest(
-    "locally deleted file is re-downloaded if the remote has updated at the same time"
+    "Locally deleted file is re-downloaded if the remote has updated at the same time."
   ) {
     local.deleted :+ remote.present :=> download
   }
 
   pureTest(
-    "locally deleted file is re-downloaded if the remote has updated later"
+    "Locally deleted file is re-downloaded if the remote has updated later."
   ) {
     local.deleted :+ remote.present.newer :=> download
   }
 
-  pureTest("locally deleting a file removes it remotely") {
+  pureTest("Locally deleting a file removes it remotely.") {
     local.deleted.later :+ remote.present :=> delete
+  }
+
+  pureTest("Re-creating a file after its deletion results in no op.") {
+    remote.present :+ local.deleted :+ local.present :=> NoOp
   }
 
   // Dubious cases:
 
   pureTest(
-    "if the local file is modified and we have no further clues, we bias to upload"
+    "If the local file is modified and we have no further clues, we bias to upload."
   ) {
     local.present.changed :+ remote.present :=> upload
   }
