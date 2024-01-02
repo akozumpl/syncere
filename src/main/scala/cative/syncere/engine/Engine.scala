@@ -43,9 +43,10 @@ object Engine {
     intels.updateWith(remote.key) {
       case Some(oldIntel) =>
         oldIntel match {
-          case Full(l, r) => Full(l, remote)
-          case l: Local   => Full(l, remote)
-          case _          => remote
+          case Full(l, r)         => Full(l, remote)
+          case l: Local           => Full(l, remote)
+          case ld: LocallyDeleted => FullLocallyDeleted(ld, remote)
+          case _                  => remote
         }
       case None =>
         remote
