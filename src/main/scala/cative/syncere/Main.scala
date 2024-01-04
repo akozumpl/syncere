@@ -5,7 +5,6 @@ import java.nio.file.WatchService
 import java.nio.file.{StandardWatchEventKinds => K}
 
 import scala.jdk.CollectionConverters.*
-import cats.Show
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
 import cats.effect.ExitCode
@@ -19,8 +18,6 @@ import cative.syncere.filesystem.Event
 import cative.syncere.given
 
 object Main extends IOApp {
-  val con = IO.consoleForIO
-
   def poll(ws: WatchService, cli: Cli, s3: S3)(previous: Intels): IO[Intels] =
     for {
       key <- IO(ws.take())
@@ -29,7 +26,7 @@ object Main extends IOApp {
       next <- events.foldLeft(IO.pure(previous)) {
         case (ioIntels, validatedEvent) =>
           validatedEvent match {
-            case Invalid(err) => ioIntels <* con.errorln(err)
+            case Invalid(err) => ioIntels <* errorln(err)
             case Valid(event) =>
               for {
                 intel <- FileSystem.intelForEvent(event)
@@ -43,12 +40,6 @@ object Main extends IOApp {
       _ <- printTagged("actions", actions)
       _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
     } yield next
-
-  def printShow[A: Show](a: A): IO[Unit] =
-    con.println(a)
-
-  def printTagged[A: Show](tag: String, a: A): IO[Unit] =
-    con.println(s"--- $tag: ---") >> printShow(a)
 
   override def run(args: List[String]): IO[ExitCode] = {
     val s3 = S3()
@@ -77,7 +68,7 @@ object Main extends IOApp {
 
     } yield ExitCode.Success
     res.recoverWith { case CliError(help) =>
-      con.error(help).as(ExitCode.Error)
+      error(help).as(ExitCode.Error)
     }
   }
 }
