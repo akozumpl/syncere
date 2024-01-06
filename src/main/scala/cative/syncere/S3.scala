@@ -23,7 +23,7 @@ import meta.Remote
 object S3 {
   import Config.*
 
-  def apply(): Resource[IO, S3] =
+  def apply: Resource[IO, S3] =
     for {
       credentials <- Resource.fromAutoCloseable(
         IO(ProfileCredentialsProvider.create(AwsConfigProfile))

@@ -5,6 +5,7 @@ import cats.data.Validated.Valid
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
+import cats.effect.kernel.Resource
 import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
@@ -13,7 +14,7 @@ import cative.syncere.filesystem.Event
 import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
-class Main(cli: Cli, s3: S3) {
+class Main(cli: Cli, s3: S3, watcher: Watcher) {
   def poll(watcher: Watcher)(previous: Intels): IO[Intels] =
     for {
       events <- watcher.take
@@ -44,21 +45,25 @@ class Main(cli: Cli, s3: S3) {
       _ <- printTagged("actions", actions)
 
       _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
-      _ <- IO.whenA(cli.isForever) {
-        for {
-          watcher <- Watcher.watch(Config.SyncPath)
-          _ <- unified.iterateForeverM(poll(watcher))
-        } yield ()
-      }
+      _ <- IO.whenA(cli.isForever)(
+        unified.iterateForeverM(poll(watcher)).as(())
+      )
 
     } yield ExitCode.Success
 }
 
 object Main extends IOApp {
+
+  def mainResource(cli: Cli): Resource[IO, Main] =
+    for {
+      s3 <- S3.apply
+      watcher <- Watcher.watch(Config.SyncPath)
+    } yield Main(cli, s3, watcher)
+
   override def run(args: List[String]): IO[ExitCode] = {
     val res = for {
       cli <- Cli.parse(args).toIO
-      exitCode <- S3().use(s3 => Main(cli, s3).run)
+      exitCode <- mainResource(cli).use(_.run)
     } yield exitCode
     res.recoverWith { case CliError(help) =>
       error(help).as(ExitCode.Error)
