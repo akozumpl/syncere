@@ -15,7 +15,15 @@ import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
 class Main(cli: Cli, s3: S3, watcher: Watcher) {
-  def poll(watcher: Watcher)(previous: Intels): IO[Intels] =
+  def play(intels: Intels): IO[Intels] = {
+    val actions = Engine.actions(intels)
+    for {
+      _ <- printTagged("actions", actions)
+      _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
+    } yield intels
+  }
+
+  def poll(previous: Intels): IO[Intels] =
     for {
       events <- watcher.take
       next <- events.foldLeft(IO.pure(previous)) {
@@ -30,23 +38,19 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
           }
       }
       _ <- printTagged("next state", next)
-      actions = Engine.actions(next)
-      _ <- printTagged("actions", actions)
-      _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
-    } yield next
+      played <- play(next)
+    } yield played
 
   val run: IO[ExitCode] =
     for {
       remoteDb <- s3.fetchIntels
       localDb <- FileSystem.fetchIntels
       unified = Intels.fresh(localDb ++ remoteDb)
-      actions = Engine.actions(unified)
-      _ <- printTagged("unified state", unified)
-      _ <- printTagged("actions", actions)
+      _ <- printTagged("fresh unified state", unified)
+      intels <- play(unified)
 
-      _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
       _ <- IO.whenA(cli.isForever)(
-        unified.iterateForeverM(poll(watcher)).as(())
+        unified.iterateForeverM(poll).as(())
       )
 
     } yield ExitCode.Success
