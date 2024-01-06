@@ -26,12 +26,12 @@ class Watcher private (ws: WatchService, path: Path) {
     IO(path.register(ws, K.ENTRY_CREATE, K.ENTRY_DELETE, K.ENTRY_MODIFY))
       .as(this)
 
-  def take: IO[List[Validated[WatchServiceError, Event]]] =
+  def take: IO[List[Validated[WatcherError, Event]]] =
     for {
       key <- IO(ws.take())
       events = key.pollEvents.asScala.toList.map(Event.decodeWatchEvent(path))
       _ <- IO(key.reset())
-        .ensure(WatchServiceError(s"Cannot reset $key"))(identity)
+        .ensure(WatcherError(s"Cannot reset $key"))(identity)
     } yield events
 
 }

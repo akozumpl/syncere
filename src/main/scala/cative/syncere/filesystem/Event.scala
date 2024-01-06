@@ -21,18 +21,18 @@ object Event {
 
   private def decodePath(
       event: WatchEvent[_]
-  ): Either[WatchServiceError, Path] =
+  ): Either[WatcherError, Path] =
     event.context() match {
       case p: Path => p.asRight
       case _ =>
-        WatchServiceError(
+        WatcherError(
           s"Failed to decode path from event ${event.toString}."
         ).asLeft
     }
 
   def decodeWatchEvent(root: Path)(
       watchEvent: WatchEvent[_]
-  ): Validated[WatchServiceError, Event] = {
+  ): Validated[WatcherError, Event] = {
     val event = for {
       relativePath <- decodePath(watchEvent)
       key = relativePath.toString
@@ -45,7 +45,7 @@ object Event {
         case "ENTRY_MODIFY" =>
           Modification(key, path).asRight
         case name =>
-          WatchServiceError(
+          WatcherError(
             s"Failed to decode event type for $path: $name."
           ).asLeft
       }
