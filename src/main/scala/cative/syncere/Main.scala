@@ -17,8 +17,8 @@ import cative.syncere.engine.Intels
 import cative.syncere.filesystem.Event
 import cative.syncere.given
 
-object Main extends IOApp {
-  def poll(ws: WatchService, cli: Cli, s3: S3)(previous: Intels): IO[Intels] =
+class Main(cli: Cli, s3: S3) {
+  def poll(ws: WatchService)(previous: Intels): IO[Intels] =
     for {
       key <- IO(ws.take())
       events = key.pollEvents.asScala.toList
@@ -41,12 +41,8 @@ object Main extends IOApp {
       _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
     } yield next
 
-  override def run(args: List[String]): IO[ExitCode] = {
-    val s3 = S3()
-
-    val res = for {
-      cli <- Cli.parse(args).toIO
-
+  val run: IO[ExitCode] =
+    for {
       remoteDb <- s3.fetchIntels
       localDb <- FileSystem.fetchIntels
       unified = Intels.fresh(localDb ++ remoteDb)
@@ -62,11 +58,21 @@ object Main extends IOApp {
             Config.SyncPath
               .register(ws, K.ENTRY_CREATE, K.ENTRY_DELETE, K.ENTRY_MODIFY)
           )
-          _ <- unified.iterateForeverM(poll(ws, cli, s3))
+          _ <- unified.iterateForeverM(poll(ws))
         } yield ()
       }
 
     } yield ExitCode.Success
+}
+
+object Main extends IOApp {
+  override def run(args: List[String]): IO[ExitCode] = {
+    val s3 = S3()
+
+    val res = for {
+      cli <- Cli.parse(args).toIO
+      exitCode <- Main(cli, s3).run
+    } yield exitCode
     res.recoverWith { case CliError(help) =>
       error(help).as(ExitCode.Error)
     }
