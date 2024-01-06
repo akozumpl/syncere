@@ -1,10 +1,5 @@
 package cative.syncere
 
-import java.nio.file.FileSystems
-import java.nio.file.WatchService
-import java.nio.file.{StandardWatchEventKinds => K}
-
-import scala.jdk.CollectionConverters.*
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
 import cats.effect.ExitCode
@@ -15,14 +10,13 @@ import cats.syntax.flatMap.*
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
 import cative.syncere.filesystem.Event
+import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
 class Main(cli: Cli, s3: S3) {
-  def poll(ws: WatchService)(previous: Intels): IO[Intels] =
+  def poll(watcher: Watcher)(previous: Intels): IO[Intels] =
     for {
-      key <- IO(ws.take())
-      events = key.pollEvents.asScala.toList
-        .map(Event.decodeWatchEvent(Config.SyncPath))
+      events <- watcher.take
       next <- events.foldLeft(IO.pure(previous)) {
         case (ioIntels, validatedEvent) =>
           validatedEvent match {
@@ -34,7 +28,6 @@ class Main(cli: Cli, s3: S3) {
               } yield intels.absorb(intel)
           }
       }
-      _ <- IO(key.reset())
       _ <- printTagged("next state", next)
       actions = Engine.actions(next)
       _ <- printTagged("actions", actions)
@@ -53,12 +46,8 @@ class Main(cli: Cli, s3: S3) {
       _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
       _ <- IO.whenA(cli.isForever) {
         for {
-          ws <- IO(FileSystems.getDefault().newWatchService())
-          _ <- IO(
-            Config.SyncPath
-              .register(ws, K.ENTRY_CREATE, K.ENTRY_DELETE, K.ENTRY_MODIFY)
-          )
-          _ <- unified.iterateForeverM(poll(ws))
+          watcher <- Watcher.watch(Config.SyncPath)
+          _ <- unified.iterateForeverM(poll(watcher))
         } yield ()
       }
 
