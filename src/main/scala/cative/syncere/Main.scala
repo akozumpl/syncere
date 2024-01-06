@@ -67,11 +67,9 @@ class Main(cli: Cli, s3: S3) {
 
 object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
-    val s3 = S3()
-
     val res = for {
       cli <- Cli.parse(args).toIO
-      exitCode <- Main(cli, s3).run
+      exitCode <- S3().use(s3 => Main(cli, s3).run)
     } yield exitCode
     res.recoverWith { case CliError(help) =>
       error(help).as(ExitCode.Error)

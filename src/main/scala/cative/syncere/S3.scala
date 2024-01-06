@@ -3,8 +3,9 @@ package cative.syncere
 import scala.jdk.CollectionConverters.*
 import cats.data.Validated
 import cats.effect.IO
+import cats.effect.Resource
 import cats.effect.std.Console
-import cats.syntax.show._
+import cats.syntax.show.*
 import cats.syntax.traverse.*
 
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
@@ -20,17 +21,23 @@ import cative.syncere.filesystem.Md5
 import meta.Remote
 
 object S3 {
-  import Config._
+  import Config.*
 
-  def apply(): S3 = {
-    val credentials = ProfileCredentialsProvider.create(AwsConfigProfile)
-    val client = S3Client
-      .builder()
-      .region(AwsRegion)
-      .credentialsProvider(credentials)
-      .build()
-    new S3(client, S3Bucket)
-  }
+  def apply(): Resource[IO, S3] =
+    for {
+      credentials <- Resource.fromAutoCloseable(
+        IO(ProfileCredentialsProvider.create(AwsConfigProfile))
+      )
+      client <- Resource.fromAutoCloseable(
+        IO(
+          S3Client
+            .builder()
+            .region(AwsRegion)
+            .credentialsProvider(credentials)
+            .build()
+        )
+      )
+    } yield new S3(client, S3Bucket)
 }
 
 class S3(client: S3Client, bucket: String) {
