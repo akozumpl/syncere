@@ -52,6 +52,7 @@ class S3(client: S3Client, bucket: String) {
   }
 
   def play(a: Action): IO[Unit] = a match {
+    case DeleteLocally(key) => FileSystem.deleteKey(key)
     case DeleteRemotely(key) =>
       val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- deleting $key") >> IO(

@@ -57,6 +57,9 @@ object FileSystem {
       }.toMap
     }.map(Db.build("localfs"))
 
+  def deleteKey(key: KeyEntry.Key): IO[Unit] =
+    IO.blocking(Files.delete(keyToPath(key)))
+
   def fetchDbLocal: IO[Db] =
     for {
       raw <- walkSyncFiles

@@ -20,6 +20,7 @@ object Engine {
     * one.
     */
   private[engine] def actionResult(a: Action): Option[FreshIntel] = a match {
+    case DeleteLocally(_)  => None
     case DeleteRemotely(_) => None
     case Download(remote) =>
       Local(remote.key, remote.tag, remote.lastChange).some

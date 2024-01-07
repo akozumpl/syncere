@@ -9,6 +9,7 @@ import cative.syncere.meta.Remote
 
 sealed trait Action
 
+case class DeleteLocally(k: KeyEntry.Key) extends Action
 case class DeleteRemotely(k: KeyEntry.Key) extends Action
 case class Download(r: Remote) extends Action
 case object NoOp extends Action
@@ -17,6 +18,8 @@ case class Upload(l: Local) extends Action
 object Action {
   given showInstance: Show[Action] = Show { action =>
     action match {
+      case DeleteLocally(k) =>
+        s"X--- $k"
       case DeleteRemotely(k) =>
         s"---X $k"
       case Download(r) =>
