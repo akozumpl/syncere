@@ -27,7 +27,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % CirceVersion,
       "io.circe" %% "circe-parser" % CirceVersion,
       "org.typelevel" %% "cats-core" % "2.9.0",
-      "org.typelevel" %% "cats-effect" % "3.5.1",
+      "org.typelevel" %% "cats-effect" % "3.5.2",
       // test
       "com.disneystreaming" %% "weaver-cats" % "0.8.3" % Test
     ),
