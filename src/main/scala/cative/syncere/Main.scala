@@ -19,8 +19,10 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
     val actions = Engine.actions(intels)
     for {
       _ <- printTagged("actions", actions)
-      _ <- IO.whenA(cli.wetRun)(s3.playAll(actions))
-    } yield intels
+      next <-
+        if (cli.wetRun) s3.playAll(actions).as(intels.absorbAllActions(actions))
+        else IO.pure(intels)
+    } yield next
   }
 
   def poll(previous: Intels): IO[Intels] =

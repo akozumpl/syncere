@@ -17,8 +17,16 @@ case class Intels(intels: Map[Key, Intel]) {
     case r: Remote          => Engine.updateRemote(this, r)
   }
 
+  def absorbAction(a: Action): Intels = Engine.actionResult(a) match {
+    case Some(fresh) => absorb(fresh)
+    case None        => this
+  }
+
   def absorbAll(is: List[FreshIntel]) =
     is.foldLeft(this) { case (i, fi) => i.absorb(fi) }
+
+  def absorbAllActions(as: List[Action]) =
+    as.foldLeft(this) { case (i, a) => i.absorbAction(a) }
 
   def updateWith(key: Key)(f: Option[Intel] => Intel): Intels = {
     val updated = f(intels.get(key))

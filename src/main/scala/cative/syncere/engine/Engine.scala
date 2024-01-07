@@ -2,6 +2,7 @@ package cative.syncere.engine
 
 import cats.syntax.option.*
 
+import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.meta.Db
 import cative.syncere.meta.*
 
@@ -11,6 +12,20 @@ object Engine {
       actions: List[Action],
       result: Db
   )
+
+  /** Produces an intel we assume to be true whenever the action was successful.
+    *
+    * The resulting intels tend to have a stale timestamp: this is OK, an actual
+    * event (on a remote refresh or a filesystem event) is fine to override this
+    * one.
+    */
+  private[engine] def actionResult(a: Action): Option[FreshIntel] = a match {
+    case DeleteRemotely(_) => None
+    case Download(remote) =>
+      Local(remote.key, remote.tag, remote.lastChange).some
+    case NoOp          => None
+    case Upload(local) => Remote(local.key, local.tag, local.lastChange).some
+  }
 
   private[engine] def updateLocal(intels: Intels, local: Local): Intels =
     intels.updateWith(local.key) {
