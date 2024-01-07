@@ -4,7 +4,7 @@ import java.time.Instant
 
 import scala.annotation.targetName
 import cats.data.NonEmptyList
-import cats.syntax.option._
+import cats.syntax.option.*
 
 import weaver.Expectations
 import weaver.SimpleIOSuite
@@ -13,13 +13,9 @@ import weaver.SourceLocation
 import cative.syncere.TestValues
 import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.filesystem.Md5
-import cative.syncere.meta._
+import cative.syncere.meta.*
 
 object EngineTest extends SimpleIOSuite with TestValues {
-  val delete = DeleteRemotely(key1)
-  val download = Download(key1)
-  val upload = Upload(key1)
-
   extension (e: Expectations) {
 
     /** Replaces the reported source code line. */
@@ -62,9 +58,25 @@ object EngineTest extends SimpleIOSuite with TestValues {
   extension (intels: Intels) {
     def :+(intel: Option[FreshIntel]): Intels = intels.absorbAll(intel.toList)
 
-    def :=>(action: Action)(implicit loc: SourceLocation): Expectations = {
-      val expectedActions = if (action == NoOp) List.empty else List(action)
-      expect(intels.actions == expectedActions).traceTo(loc)
+    /** Verifies the type and the key of the action matches the expectation */
+    def :=>(rhAction: Option[Action])(implicit
+        loc: SourceLocation
+    ): Expectations = {
+      val actions = intels.actions
+      rhAction match {
+        case None | Some(NoOp) =>
+          expect(actions.isEmpty).traced(loc)
+        case Some(Download(r)) =>
+          matches(actions) { case Download(r2) :: Nil =>
+            expect(r2.key == r.key).traced(loc)
+          }
+        case Some(Upload(l)) =>
+          matches(actions) { case Upload(l2) :: Nil =>
+            expect(l2.key == l2.key).traced(loc)
+          }
+        case a =>
+          expect(actions == a.toList).traced(loc)
+      }
     }
   }
 
@@ -78,6 +90,11 @@ object EngineTest extends SimpleIOSuite with TestValues {
     val missing = None
     val present = Remote(key1, md5, anInstant).some
   }
+
+  val delete = DeleteRemotely(key1).some
+  val download = remote.present.map(Download.apply)
+  val noOp = None
+  val upload = local.present.map(Upload.apply)
 
   // Basic cases:
 
@@ -114,7 +131,7 @@ object EngineTest extends SimpleIOSuite with TestValues {
   }
 
   pureTest("Re-creating a file after its deletion results in no op.") {
-    remote.present :+ local.deleted :+ local.present :=> NoOp
+    remote.present :+ local.deleted :+ local.present :=> noOp
   }
 
   // Dubious cases:

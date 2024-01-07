@@ -57,14 +57,16 @@ class S3(client: S3Client, bucket: String) {
       con.println(show" --- deleting $key") >> IO(
         client.deleteObject(req)
       ).as(())
-    case Download(key) =>
+    case Download(remote) =>
+      val key = remote.key
       val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- downloading $key") >> IO(
         client.getObject(req, FileSystem.keyToPath(key))
       ).as(())
     case NoOp =>
       IO.unit
-    case Upload(key) =>
+    case Upload(local) =>
+      val key = local.key
       val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
       con.println(show" --- uploading $key") >> IO(
         client.putObject(req, FileSystem.keyToPath(key))

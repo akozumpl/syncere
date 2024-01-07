@@ -1,6 +1,6 @@
 package cative.syncere.engine
 
-import cats.syntax.option._
+import cats.syntax.option.*
 
 import cative.syncere.meta.Db
 import cative.syncere.meta.*
@@ -58,18 +58,18 @@ object Engine {
       .map {
         case Full(l, r) =>
           if (l.tag != r.tag) {
-            if (r.lastChange.isAfter(l.lastChange)) Download(l.key)
-            else Upload(l.key)
+            if (r.lastChange.isAfter(l.lastChange)) Download(r)
+            else Upload(l)
           } else NoOp
         case FullLocallyDeleted(d, r) =>
           if (d.seen.isAfter(r.lastChange)) DeleteRemotely(d.key)
-          else Download(d.key)
-        case Local(k, _, _) =>
-          Upload(k)
+          else Download(r)
+        case l: Local =>
+          Upload(l)
         case LocallyDeleted(key, _) =>
           DeleteRemotely(key)
-        case Remote(k, _, _) =>
-          Download(k)
+        case r: Remote =>
+          Download(r)
       }
       .filter(_ != NoOp)
       .toList
