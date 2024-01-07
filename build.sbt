@@ -1,6 +1,6 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-val CirceVersion = "0.14.5"
+val CirceVersion = "0.14.6"
 val Slf4jVersion = "2.0.9"
 
 lazy val root = (project in file("."))
