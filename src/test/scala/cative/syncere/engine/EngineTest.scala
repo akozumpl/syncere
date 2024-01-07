@@ -16,7 +16,7 @@ import cative.syncere.filesystem.Md5
 import cative.syncere.meta._
 
 object EngineTest extends SimpleIOSuite with TestValues {
-  val delete = Delete(key1)
+  val delete = DeleteRemotely(key1)
   val download = Download(key1)
   val upload = Upload(key1)
 

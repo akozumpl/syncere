@@ -62,12 +62,12 @@ object Engine {
             else Upload(l.key)
           } else NoOp
         case FullLocallyDeleted(d, r) =>
-          if (d.seen.isAfter(r.lastChange)) Delete(d.key)
+          if (d.seen.isAfter(r.lastChange)) DeleteRemotely(d.key)
           else Download(d.key)
         case Local(k, _, _) =>
           Upload(k)
         case LocallyDeleted(key, _) =>
-          Delete(key)
+          DeleteRemotely(key)
         case Remote(k, _, _) =>
           Download(k)
       }

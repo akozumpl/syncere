@@ -7,7 +7,7 @@ import cative.syncere.meta.KeyEntry
 
 sealed trait Action
 
-case class Delete(k: KeyEntry.Key) extends Action
+case class DeleteRemotely(k: KeyEntry.Key) extends Action
 case class Download(k: KeyEntry.Key) extends Action
 case object NoOp extends Action
 case class Upload(k: KeyEntry.Key) extends Action
@@ -15,7 +15,7 @@ case class Upload(k: KeyEntry.Key) extends Action
 object Action {
   given showInstance: Show[Action] = Show { action =>
     action match {
-      case Delete(k) =>
+      case DeleteRemotely(k) =>
         s"---X $k"
       case Download(k) =>
         s"<--- $k"
