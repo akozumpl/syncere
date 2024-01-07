@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       // Java deps (no native equivalent)
       "org.slf4j" % "slf4j-simple" % Slf4jVersion,
-      "software.amazon.awssdk" % "s3" % "2.20.116",
+      "software.amazon.awssdk" % "s3" % "2.22.12",
       // Scala deps, working in native
       "com.monovore" %% "decline" % "2.4.1",
       "io.circe" %% "circe-core" % CirceVersion,
