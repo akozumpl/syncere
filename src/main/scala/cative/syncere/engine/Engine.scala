@@ -29,45 +29,30 @@ object Engine {
   }
 
   private[engine] def updateLocal(intels: Intels, local: Local): Intels =
-    intels.updateWith(local.key) {
-      case Some(oldIntel) =>
-        oldIntel match {
-          case Full(l, r)                => Full(local, r)
-          case FullLocallyDeleted(ld, r) => Full(local, r)
-          case r: Remote                 => Full(local, r)
-          case _                         => local
-        }
-      case None =>
-        local
-    }
+    intels.updateOrElse(local.key) {
+      case Full(l, r)                => Full(local, r)
+      case FullLocallyDeleted(ld, r) => Full(local, r)
+      case r: Remote                 => Full(local, r)
+      case _                         => local
+    }(local)
 
   private[engine] def updateLocallyDeleted(
       intels: Intels,
       deleted: LocallyDeleted
   ): Intels =
-    intels.updateWith(deleted.key) {
-      case Some(oldIntel) =>
-        oldIntel match {
-          case Full(l, r) => FullLocallyDeleted(deleted, r)
-          case r: Remote  => FullLocallyDeleted(deleted, r)
-          case _          => deleted
-        }
-      case None =>
-        deleted
-    }
+    intels.updateOrElse(deleted.key) {
+      case Full(l, r) => FullLocallyDeleted(deleted, r)
+      case r: Remote  => FullLocallyDeleted(deleted, r)
+      case _          => deleted
+    }(deleted)
 
   private[engine] def updateRemote(intels: Intels, remote: Remote): Intels =
-    intels.updateWith(remote.key) {
-      case Some(oldIntel) =>
-        oldIntel match {
-          case Full(l, r)         => Full(l, remote)
-          case l: Local           => Full(l, remote)
-          case ld: LocallyDeleted => FullLocallyDeleted(ld, remote)
-          case _                  => remote
-        }
-      case None =>
-        remote
-    }
+    intels.updateOrElse(remote.key) {
+      case Full(l, r)         => Full(l, remote)
+      case l: Local           => Full(l, remote)
+      case ld: LocallyDeleted => FullLocallyDeleted(ld, remote)
+      case _                  => remote
+    }(remote)
 
   def actions(i: Intels): List[Action] =
     i.intels.values

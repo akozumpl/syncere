@@ -1,7 +1,7 @@
 package cative.syncere.engine
 
 import cats.Show
-import cats.syntax.contravariant._
+import cats.syntax.contravariant.*
 
 import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.given
@@ -28,9 +28,12 @@ case class Intels(intels: Map[Key, Intel]) {
   def absorbAllActions(as: List[Action]) =
     as.foldLeft(this) { case (i, a) => i.absorbAction(a) }
 
-  def updateWith(key: Key)(f: Option[Intel] => Intel): Intels = {
-    val updated = f(intels.get(key))
-    Intels(intels.updated(key, updated))
+  def updateOrElse(key: Key)(f: Intel => Intel)(orElse: => Intel): Intels = {
+    val newIntel = intels.get(key) match {
+      case Some(intel) => f(intel)
+      case None        => orElse
+    }
+    Intels(intels.updated(key, newIntel))
   }
 }
 

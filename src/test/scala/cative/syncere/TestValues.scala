@@ -4,6 +4,7 @@ import java.time.Instant
 
 import cative.syncere.filesystem.Md5
 import cative.syncere.meta.Local
+import cative.syncere.meta.Remote
 
 trait TestValues {
   val HourSeconds = 3600
@@ -16,4 +17,6 @@ trait TestValues {
 
   val localIntel1 = Local(key1, md5, anInstant)
   val localIntel2 = Local(key2, md5, anInstant)
+  val remoteIntel1 = Remote(key1, md5, anInstant)
+  val remoteIntel2 = Remote(key2, md5, anInstant)
 }
