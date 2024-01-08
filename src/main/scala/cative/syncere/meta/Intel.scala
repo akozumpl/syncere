@@ -25,6 +25,8 @@ object Intel {
       d.show
     case r: Remote =>
       r.show
+    case r: RemotelyDeleted =>
+      r.show
   }
 }
 
@@ -74,4 +76,11 @@ case class Remote(key: Key, tag: Md5, lastChange: Instant) extends Intel
 object Remote {
   given Show[Remote] =
     Show.show(r => show"Remote intel: ${r.key} ${r.tag} ${r.lastChange}")
+}
+
+case class RemotelyDeleted(key: Key) extends Intel
+
+object RemotelyDeleted {
+  given Show[RemotelyDeleted] =
+    Show.show(r => show"Remotely deleted intel: ${r.key}")
 }

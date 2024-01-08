@@ -86,6 +86,9 @@ object Engine {
           DeleteRemotely(key)
         case r: Remote =>
           Download(r)
+        case RemotelyDeleted(key) =>
+          DeleteLocally(key)
+
       }
       .filter(_ != NoOp)
       .toList
