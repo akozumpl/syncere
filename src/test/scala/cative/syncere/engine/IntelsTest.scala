@@ -36,6 +36,12 @@ object IntelsTest extends SimpleIOSuite with TestValues {
         .intels(key1)
         == remoteIntel2
     )
-
   }
+
+  pureTest("updateWith() can drop a key") {
+    expect(
+      intels.updateWith(key1)(_ => None) == Intels.fresh(List(localIntel2))
+    )
+  }
+
 }
