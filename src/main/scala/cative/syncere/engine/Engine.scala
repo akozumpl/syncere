@@ -20,8 +20,8 @@ object Engine {
     * one.
     */
   private[engine] def actionResult(a: Action): Option[FreshIntel] = a match {
-    case DeleteLocally(_)  => None
-    case DeleteRemotely(_) => None
+    case DeleteLocally(_)    => None
+    case DeleteRemotely(key) => RemotelyDeleted(key).some
     case Download(remote) =>
       Local(remote.key, remote.tag, remote.lastChange).some
     case NoOp          => None
@@ -54,6 +54,23 @@ object Engine {
       case _                  => remote
     }(remote)
 
+  private[engine] def updateRemotelyDeleted(
+      intels: Intels,
+      deleted: RemotelyDeleted
+  ): Intels =
+    intels.updateWith(deleted.key) {
+      case Some(oldIntel) =>
+        oldIntel match {
+          case FullLocallyDeleted(locallyDeleted, r) => None
+          case Full(l, r)           => FullRemotelyDeleted(l, deleted).some
+          case l: Local             => FullRemotelyDeleted(l, deleted).some
+          case LocallyDeleted(_, _) => None
+          case _                    => None
+        }
+      case None =>
+        None
+    }
+
   def actions(i: Intels): List[Action] =
     i.intels.values
       .map {
@@ -65,6 +82,8 @@ object Engine {
         case FullLocallyDeleted(d, r) =>
           if (d.seen.isAfter(r.lastChange)) DeleteRemotely(d.key)
           else Download(r)
+        case FullRemotelyDeleted(l, d) =>
+          DeleteLocally(l.key)
         case l: Local =>
           Upload(l)
         case LocallyDeleted(key, _) =>

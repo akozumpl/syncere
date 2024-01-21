@@ -18,10 +18,10 @@ import cative.syncere.meta.*
 object EngineTest extends SimpleIOSuite with TestValues {
   extension (e: Expectations) {
 
-    /** Replaces the reported source code line. */
+    /** Appends the reported source code line. */
     def traceTo(loc: SourceLocation): Expectations =
       Expectations(
-        e.run.leftMap(_.map(e => e.copy(locations = NonEmptyList.of(loc))))
+        e.run.leftMap(_.map(e => e.copy(locations = e.locations.append((loc)))))
       )
   }
 
@@ -58,26 +58,31 @@ object EngineTest extends SimpleIOSuite with TestValues {
   extension (intels: Intels) {
     def :+(intel: Option[FreshIntel]): Intels = intels.absorbAll(intel.toList)
 
-    /** Verifies the type and the key of the action matches the expectation */
-    def :=>(rhAction: Option[Action])(implicit
-        loc: SourceLocation
-    ): Expectations = {
+    private def mainExpectations(rhAction: Option[Action]): Expectations = {
       val actions = intels.actions
       rhAction match {
         case None | Some(NoOp) =>
-          expect(actions.isEmpty).traced(loc)
+          expect(actions.isEmpty)
         case Some(Download(r)) =>
           matches(actions) { case Download(r2) :: Nil =>
-            expect(r2.key == r.key).traced(loc)
+            expect(r2.key == r.key)
           }
         case Some(Upload(l)) =>
           matches(actions) { case Upload(l2) :: Nil =>
-            expect(l2.key == l2.key).traced(loc)
+            expect(l2.key == l2.key)
           }
         case a =>
-          expect(actions == a.toList).traced(loc)
+          expect(actions == a.toList)
       }
     }
+
+    /** Verifies the type and the key of the action matches the expectation */
+    def :=>(rhAction: Option[Action])(implicit
+        loc: SourceLocation
+    ): Expectations =
+      mainExpectations(rhAction)
+        .and(expect(intels.absorbAllActions(intels.actions).actions.isEmpty))
+        .traceTo(loc)
   }
 
   object local {

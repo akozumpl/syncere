@@ -13,9 +13,10 @@ case class Intels(intels: Map[Key, Intel]) {
   def actions = Engine.actions(this)
 
   def absorb(i: FreshIntel): Intels = i match {
-    case l: Local           => Engine.updateLocal(this, l)
-    case ld: LocallyDeleted => Engine.updateLocallyDeleted(this, ld)
-    case r: Remote          => Engine.updateRemote(this, r)
+    case l: Local            => Engine.updateLocal(this, l)
+    case ld: LocallyDeleted  => Engine.updateLocallyDeleted(this, ld)
+    case r: Remote           => Engine.updateRemote(this, r)
+    case rd: RemotelyDeleted => Engine.updateRemotelyDeleted(this, rd)
   }
 
   def absorbAction(a: Action): Intels = Engine.actionResult(a) match {
@@ -42,7 +43,7 @@ case class Intels(intels: Map[Key, Intel]) {
 object Intels {
   given Show[Intels] = Show[List[Intel]].contramap(_.intels.values.toList)
 
-  type FreshIntel = Local | LocallyDeleted | Remote
+  type FreshIntel = Local | LocallyDeleted | Remote | RemotelyDeleted
 
   val empty: Intels = Intels(Map.empty)
 

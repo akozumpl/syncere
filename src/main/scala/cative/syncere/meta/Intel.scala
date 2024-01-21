@@ -19,6 +19,8 @@ object Intel {
       f.show
     case f: FullLocallyDeleted =>
       f.show
+    case f: FullRemotelyDeleted =>
+      f.show
     case l: Local =>
       l.show
     case d: LocallyDeleted =>
@@ -48,6 +50,18 @@ object FullLocallyDeleted {
   given Show[FullLocallyDeleted] =
     Show.show(f =>
       show"Local deletion with existing remote intel: ${f.locallyDeleted} / ${f.remote}"
+    )
+}
+
+case class FullRemotelyDeleted(local: Local, remotelyDeleted: RemotelyDeleted)
+    extends Intel {
+  override def key: Key = local.key
+}
+
+object FullRemotelyDeleted {
+  given Show[FullRemotelyDeleted] =
+    Show.show(f =>
+      show"Local intel with remote deletion: ${f.local} / ${f.remotelyDeleted}"
     )
 }
 
