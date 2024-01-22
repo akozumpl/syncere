@@ -69,7 +69,7 @@ object EngineTest extends SimpleIOSuite with TestValues {
           }
         case Some(Upload(l)) =>
           matches(actions) { case Upload(l2) :: Nil =>
-            expect(l2.key == l2.key)
+            expect(l.key == l2.key)
           }
         case a =>
           expect(actions == a.toList)
