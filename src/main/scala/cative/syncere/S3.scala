@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Object
 
+import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
 import meta.Remote
@@ -51,31 +52,37 @@ class S3(client: S3Client, bucket: String) {
     } yield is
   }
 
-  def play(a: Action): IO[Unit] = a match {
-    case DeleteLocally(key) =>
-      con.println(show" --- deleting locally $key") >> FileSystem.deleteKey(key)
-    case DeleteRemotely(key) =>
-      val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
-      con.println(show" --- deleting $key") >> IO(
-        client.deleteObject(req)
-      ).as(())
-    case Download(remote) =>
-      val key = remote.key
-      val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
-      con.println(show" --- downloading $key") >> IO(
-        client.getObject(req, FileSystem.keyToPath(key))
-      ).as(())
-    case NoOp =>
-      IO.unit
-    case Upload(local) =>
-      val key = local.key
-      val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
-      con.println(show" --- uploading $key") >> IO(
-        client.putObject(req, FileSystem.keyToPath(key))
-      ).as(())
+  def play(a: Action): IO[Option[FreshIntel]] = {
+    val played = a match {
+      case DeleteLocally(key) =>
+        con.println(show" --- deleting locally $key") >> FileSystem.deleteKey(
+          key
+        )
+      case DeleteRemotely(key) =>
+        val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
+        con.println(show" --- deleting $key") >> IO(
+          client.deleteObject(req)
+        ).as(())
+      case Download(remote) =>
+        val key = remote.key
+        val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
+        con.println(show" --- downloading $key") >> IO(
+          client.getObject(req, FileSystem.keyToPath(key))
+        ).as(())
+      case NoOp =>
+        IO.unit
+      case Upload(local) =>
+        val key = local.key
+        val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
+        con.println(show" --- uploading $key") >> IO(
+          client.putObject(req, FileSystem.keyToPath(key))
+        ).as(())
+    }
+    played.as(Engine.actionResult(a))
   }
 
-  def playAll(as: List[Action]): IO[Unit] = as.traverse(play).as(())
+  def playAll(as: List[Action]): IO[List[FreshIntel]] =
+    as.traverse(play).map(_.flatten)
 
 }
 

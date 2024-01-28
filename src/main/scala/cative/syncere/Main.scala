@@ -20,7 +20,7 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
     for {
       _ <- printTagged("actions", actions)
       next <-
-        if (cli.wetRun) s3.playAll(actions).as(intels.absorbAllActions(actions))
+        if (cli.wetRun) s3.playAll(actions).map(intels.absorbAll)
         else IO.pure(intels)
     } yield next
   }

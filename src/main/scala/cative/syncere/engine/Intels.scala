@@ -19,16 +19,8 @@ case class Intels(intels: Map[Key, Intel]) {
     case rd: RemotelyDeleted => Engine.updateRemotelyDeleted(this, rd)
   }
 
-  def absorbAction(a: Action): Intels = Engine.actionResult(a) match {
-    case Some(fresh) => absorb(fresh)
-    case None        => this
-  }
-
   def absorbAll(is: List[FreshIntel]) =
     is.foldLeft(this) { case (i, fi) => i.absorb(fi) }
-
-  def absorbAllActions(as: List[Action]) =
-    as.foldLeft(this) { case (i, a) => i.absorbAction(a) }
 
   def updateOrElse(key: Key)(f: Intel => Intel)(orElse: => Intel): Intels =
     updateWith(key) {

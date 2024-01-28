@@ -76,12 +76,18 @@ object EngineTest extends SimpleIOSuite with TestValues {
       }
     }
 
+    /** Simulates actions taking place. */
+    private def played: Intels = {
+      val results = intels.actions.flatMap(Engine.actionResult)
+      intels.absorbAll(results)
+    }
+
     /** Verifies the type and the key of the action matches the expectation */
     def :=>(rhAction: Option[Action])(implicit
         loc: SourceLocation
     ): Expectations =
       mainExpectations(rhAction)
-        .and(expect(intels.absorbAllActions(intels.actions).actions.isEmpty))
+        .and(expect(played.actions.isEmpty))
         .traceTo(loc)
   }
 

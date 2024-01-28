@@ -19,7 +19,7 @@ object Engine {
     * event (on a remote refresh or a filesystem event) is fine to override this
     * one.
     */
-  private[engine] def actionResult(a: Action): Option[FreshIntel] = a match {
+  def actionResult(a: Action): Option[FreshIntel] = a match {
     case DeleteLocally(_)    => None
     case DeleteRemotely(key) => RemotelyDeleted(key).some
     case Download(remote) =>
