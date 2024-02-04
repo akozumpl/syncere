@@ -1,5 +1,6 @@
 package cative.syncere
 
+import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -19,6 +20,9 @@ import cative.syncere.meta.Local
 import cative.syncere.meta.LocallyDeleted
 
 object FileSystem {
+
+  type FSIntel = Local | LocallyDeleted
+
   private val walkSyncFiles: IO[List[Path]] = for {
     all <- IO(
       Files
@@ -75,12 +79,20 @@ object FileSystem {
       list <- iter.toList.traverse(localIntel)
     } yield list
 
-  def intelForEvent(event: Event): IO[Local | LocallyDeleted] = event match {
+  def intelForEvent(event: Event): IO[FSIntel] = event match {
     case e @ (_: Creation | _: Modification) =>
       localIntel(event.path)
     case Deletion(key, _) =>
       IO.realTimeInstant.map(seen => LocallyDeleted(key, seen))
   }
+
+  def intelsSansProblems(events: List[Event]): IO[List[FSIntel]] =
+    events.flatTraverse { event =>
+      intelForEvent(event).map(List(_)).recoverWith {
+        case e: FileNotFoundException =>
+          errorln(s"Ignored local read issue: $e").as(List.empty)
+      }
+    }
 
   def keyToPath(key: KeyEntry.Key): Path =
     Config.SyncPath.resolve(key)

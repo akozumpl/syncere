@@ -26,11 +26,9 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
     for {
       validatedEvents <- watcher.take
       events <- Watcher.stripInvalid(validatedEvents)
-      next <- events.foldLeft(IO.pure(previous)) { case (ioIntels, event) =>
-        for {
-          intel <- FileSystem.intelForEvent(event)
-          intels <- ioIntels
-        } yield intels.absorb(intel)
+      intels <- FileSystem.intelsSansProblems(events)
+      next = intels.foldLeft(previous) { case (intels, intel) =>
+        previous.absorb(intel)
       }
       _ <- printTagged("next state", next)
       played <- play(next)
