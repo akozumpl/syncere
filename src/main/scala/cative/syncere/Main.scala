@@ -1,7 +1,5 @@
 package cative.syncere
 
-import cats.data.Validated.Invalid
-import cats.data.Validated.Valid
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
@@ -10,7 +8,6 @@ import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
-import cative.syncere.filesystem.Event
 import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
@@ -27,17 +24,13 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
 
   def poll(previous: Intels): IO[Intels] =
     for {
-      events <- watcher.take
-      next <- events.foldLeft(IO.pure(previous)) {
-        case (ioIntels, validatedEvent) =>
-          validatedEvent match {
-            case Invalid(err) => ioIntels <* errorln(err)
-            case Valid(event) =>
-              for {
-                intel <- FileSystem.intelForEvent(event)
-                intels <- ioIntels
-              } yield intels.absorb(intel)
-          }
+      validatedEvents <- watcher.take
+      events <- Watcher.stripInvalid(validatedEvents)
+      next <- events.foldLeft(IO.pure(previous)) { case (ioIntels, event) =>
+        for {
+          intel <- FileSystem.intelForEvent(event)
+          intels <- ioIntels
+        } yield intels.absorb(intel)
       }
       _ <- printTagged("next state", next)
       played <- play(next)

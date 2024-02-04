@@ -7,11 +7,22 @@ import java.nio.file.{StandardWatchEventKinds => K}
 
 import scala.jdk.CollectionConverters.*
 import cats.data.Validated
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
 import cats.effect.IO
 import cats.effect.Resource
 import cats.syntax.monadError.*
+import cats.syntax.traverse.*
+
+import cative.syncere.*
 
 object Watcher {
+  def stripInvalid(ves: List[Validated[WatcherError, Event]]): IO[List[Event]] =
+    ves.flatTraverse {
+      case Invalid(err) => errorln(err).as(List.empty)
+      case Valid(event) => IO.pure(List(event))
+    }
+
   def watch(path: Path): Resource[IO, Watcher] =
     Resource
       .fromAutoCloseable(IO(FileSystems.getDefault().newWatchService()))
