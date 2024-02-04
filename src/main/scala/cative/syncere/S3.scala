@@ -5,6 +5,7 @@ import cats.data.Validated
 import cats.effect.IO
 import cats.effect.Resource
 import cats.effect.std.Console
+import cats.syntax.option.*
 import cats.syntax.show.*
 import cats.syntax.traverse.*
 
@@ -52,34 +53,32 @@ class S3(client: S3Client, bucket: String) {
     } yield is
   }
 
-  def play(a: Action): IO[Option[FreshIntel]] = {
-    val played = a match {
-      case DeleteLocally(key) =>
+  def play(a: Action): IO[Option[FreshIntel]] =
+    a match {
+      case d @ DeleteLocally(key) =>
         con.println(show" --- deleting locally $key") >> FileSystem.deleteKey(
           key
-        )
-      case DeleteRemotely(key) =>
+        ) as (None)
+      case d @ DeleteRemotely(key) =>
         val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- deleting $key") >> IO(
           client.deleteObject(req)
-        ).as(())
-      case Download(remote) =>
+        ).as(d.result.some)
+      case d @ Download(remote) =>
         val key = remote.key
         val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- downloading $key") >> IO(
           client.getObject(req, FileSystem.keyToPath(key))
-        ).as(())
+        ).as(d.result.some)
       case NoOp =>
-        IO.unit
-      case Upload(local) =>
+        IO.pure(None)
+      case u @ Upload(local) =>
         val key = local.key
         val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- uploading $key") >> IO(
           client.putObject(req, FileSystem.keyToPath(key))
-        ).as(())
+        ).as(u.result.some)
     }
-    played.as(Engine.actionResult(a))
-  }
 
   def playAll(as: List[Action]): IO[List[FreshIntel]] =
     as.traverse(play).map(_.flatten)

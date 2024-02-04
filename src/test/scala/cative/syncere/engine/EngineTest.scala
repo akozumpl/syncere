@@ -76,9 +76,18 @@ object EngineTest extends SimpleIOSuite with TestValues {
       }
     }
 
+    private def intelActionResult(i: Intel): Option[FreshIntel] =
+      Engine.action(i) match {
+        case DeleteLocally(_)        => None
+        case d @ DeleteRemotely(key) => d.result.some
+        case d @ Download(remote)    => d.result.some
+        case NoOp                    => None
+        case u @ Upload(local)       => u.result.some
+      }
+
     /** Simulates actions taking place. */
     private def played: Intels = {
-      val results = intels.actions.flatMap(Engine.actionResult)
+      val results = intels.intels.values.flatMap(intelActionResult).toList
       intels.absorbAll(results)
     }
 
