@@ -43,7 +43,7 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
       intels <- play(unified)
 
       _ <- IO.whenA(cli.isForever)(
-        unified.iterateForeverM(poll).as(())
+        intels.iterateForeverM(poll).as(())
       )
 
     } yield ExitCode.Success
