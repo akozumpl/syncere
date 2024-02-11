@@ -56,9 +56,10 @@ class S3(client: S3Client, bucket: String) {
   def play(a: Action): IO[Option[FreshIntel]] =
     a match {
       case d @ DeleteLocally(key) =>
-        con.println(show" --- deleting locally $key") >> FileSystem.deleteKey(
-          key
-        ) as (None)
+        for {
+          _ <- con.println(show" --- deleting locally $key")
+          when <- FileSystem.deleteKey(key)
+        } yield d.result(when).some
       case d @ DeleteRemotely(key) =>
         val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- deleting $key") >> IO(

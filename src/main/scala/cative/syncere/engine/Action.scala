@@ -1,5 +1,7 @@
 package cative.syncere.engine
 
+import java.time.Instant
+
 import cats.Show
 import cats.syntax.option.*
 
@@ -14,7 +16,9 @@ import cative.syncere.meta.*
   */
 sealed trait Action
 
-case class DeleteLocally(k: KeyEntry.Key) extends Action
+case class DeleteLocally(k: KeyEntry.Key) extends Action {
+  def result(seen: Instant) = LocallyDeleted(k, seen)
+}
 
 case class DeleteRemotely(k: KeyEntry.Key) extends Action {
   val result = RemotelyDeleted(k)

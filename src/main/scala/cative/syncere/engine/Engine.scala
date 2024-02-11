@@ -24,18 +24,22 @@ object Engine {
       intels: Intels,
       deleted: LocallyDeleted
   ): Intels =
-    intels.updateOrElse(deleted.key) {
-      case Full(l, r) => FullLocallyDeleted(deleted, r)
-      case r: Remote  => FullLocallyDeleted(deleted, r)
-      case _          => deleted
-    }(deleted)
+    intels.updateWith(deleted.key) {
+      case Some(Full(l, r)) => FullLocallyDeleted(deleted, r).some
+      case Some(r: Remote)  => FullLocallyDeleted(deleted, r).some
+      case Some(FullRemotelyDeleted(_, _)) => None
+      case Some(RemotelyDeleted(_))        => None
+      case _                               => deleted.some
+    }
 
   private[engine] def updateRemote(intels: Intels, remote: Remote): Intels =
-    intels.updateOrElse(remote.key) {
-      case Full(l, r)         => Full(l, remote)
-      case l: Local           => Full(l, remote)
-      case ld: LocallyDeleted => FullLocallyDeleted(ld, remote)
-      case _                  => remote
+    intels.updateOrElse(remote.key) { intel =>
+      intel match {
+        case Full(l, r)         => Full(l, remote)
+        case l: Local           => Full(l, remote)
+        case ld: LocallyDeleted => FullLocallyDeleted(ld, remote)
+        case _                  => remote
+      }
     }(remote)
 
   private[engine] def updateRemotelyDeleted(

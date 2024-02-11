@@ -78,7 +78,7 @@ object EngineTest extends SimpleIOSuite with TestValues {
 
     private def intelActionResult(i: Intel): Option[FreshIntel] =
       Engine.action(i) match {
-        case DeleteLocally(_)        => None
+        case d @ DeleteLocally(_)    => d.result(anInstant).some
         case d @ DeleteRemotely(key) => d.result.some
         case d @ Download(remote)    => d.result.some
         case NoOp                    => None
@@ -108,10 +108,12 @@ object EngineTest extends SimpleIOSuite with TestValues {
 
   object remote {
     val missing = None
+    val deleted = RemotelyDeleted(key1).some
     val present = Remote(key1, md5, anInstant).some
   }
 
-  val delete = DeleteRemotely(key1).some
+  val deleteLocal = DeleteLocally(key1).some
+  val deleteRemote = DeleteRemotely(key1).some
   val download = remote.present.map(Download.apply)
   val noOp = None
   val upload = local.present.map(Upload.apply)
@@ -147,11 +149,15 @@ object EngineTest extends SimpleIOSuite with TestValues {
   }
 
   pureTest("Locally deleting a file removes it remotely.") {
-    local.deleted.later :+ remote.present :=> delete
+    local.deleted.later :+ remote.present :=> deleteRemote
   }
 
   pureTest("Re-creating a file after its deletion results in no op.") {
     remote.present :+ local.deleted :+ local.present :=> noOp
+  }
+
+  pureTest("Remotely deleting a file removes it locally.") {
+    local.present :+ remote.deleted :=> deleteLocal
   }
 
   // Dubious cases:
@@ -160,6 +166,12 @@ object EngineTest extends SimpleIOSuite with TestValues {
     "If the local file is modified and we have no further clues, we bias to upload."
   ) {
     local.present.changed :+ remote.present :=> upload
+  }
+
+  pureTest(
+    "If we learn about local update in the same moment as remote deletion, we bias to re-upload."
+  ) {
+    local.present :+ remote.deleted :+ local.present.changed :=> upload
   }
 
 }

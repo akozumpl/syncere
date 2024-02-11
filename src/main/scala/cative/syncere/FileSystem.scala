@@ -61,8 +61,13 @@ object FileSystem {
       }.toMap
     }.map(Db.build("localfs"))
 
-  def deleteKey(key: KeyEntry.Key): IO[Unit] =
-    IO.blocking(Files.delete(keyToPath(key)))
+  /** Deletes the key from the FS and yields the time when the deletion
+    * happened.
+    */
+  def deleteKey(key: KeyEntry.Key): IO[Instant] = for {
+    when <- IO.realTimeInstant
+    _ <- IO.blocking(Files.delete(keyToPath(key)))
+  } yield when
 
   def fetchDbLocal: IO[Db] =
     for {
