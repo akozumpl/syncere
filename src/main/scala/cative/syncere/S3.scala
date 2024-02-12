@@ -62,23 +62,29 @@ class S3(client: S3Client, bucket: String) {
         } yield d.result(when).some
       case d @ DeleteRemotely(key) =>
         val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
-        con.println(show" --- deleting $key") >> IO(
-          client.deleteObject(req)
-        ).as(d.result.some)
+        con.println(show" --- deleting $key") >> IO
+          .blocking(
+            client.deleteObject(req)
+          )
+          .as(d.result.some)
       case d @ Download(remote) =>
         val key = remote.key
         val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
-        con.println(show" --- downloading $key") >> IO(
-          client.getObject(req, FileSystem.keyToPath(key))
-        ).as(d.result.some)
+        con.println(show" --- downloading $key") >> IO
+          .blocking(
+            client.getObject(req, FileSystem.keyToPath(key))
+          )
+          .as(d.result.some)
       case NoOp =>
         IO.pure(None)
       case u @ Upload(local) =>
         val key = local.key
         val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
-        con.println(show" --- uploading $key") >> IO(
-          client.putObject(req, FileSystem.keyToPath(key))
-        ).as(u.result.some)
+        con.println(show" --- uploading $key") >> IO
+          .blocking(
+            client.putObject(req, FileSystem.keyToPath(key))
+          )
+          .as(u.result.some)
     }
 
   def playAll(as: List[Action]): IO[List[FreshIntel]] =

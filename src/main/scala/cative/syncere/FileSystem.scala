@@ -29,13 +29,13 @@ object FileSystem {
         .walk(Config.SyncPath)
     ).map(_.iterator().asScala)
     flagged <- all.toList
-      .map(path => IO((path, path.toFile().isFile())))
+      .map(path => IO.blocking((path, path.toFile().isFile())))
       .sequence
     filesOnly = flagged.collect { case (path, true) => path }
   } yield filesOnly
 
   private def lastModified(p: Path): IO[Instant] =
-    IO(Files.getLastModifiedTime(p)).map(_.toInstant)
+    IO.blocking(Files.getLastModifiedTime(p)).map(_.toInstant)
 
   private def localIntel(p: Path): IO[Local] =
     for {
@@ -54,12 +54,12 @@ object FileSystem {
   private def pathToKey(root: Path)(p: Path): KeyEntry.Key =
     root.relativize(p).toString
 
-  private def dbFromFileIterator(entries: List[KeyEntry.Key]): IO[Db] =
-    IO {
-      entries.map { k =>
-        (k, KeyEntry(k, None))
-      }.toMap
-    }.map(Db.build("localfs"))
+  private def dbFromFileIterator(entries: List[KeyEntry.Key]): Db = {
+    val keys = entries.map { k =>
+      (k, KeyEntry(k, None))
+    }.toMap
+    Db.build("localfs")(keys)
+  }
 
   /** Deletes the key from the FS and yields the time when the deletion
     * happened.
@@ -75,8 +75,7 @@ object FileSystem {
       refined = raw
         .map(pathToKey(Config.SyncPath))
         .filter(_.nonEmpty)
-      db <- dbFromFileIterator(refined)
-    } yield db
+    } yield dbFromFileIterator(refined)
 
   def fetchIntels: IO[List[Local]] =
     for {
