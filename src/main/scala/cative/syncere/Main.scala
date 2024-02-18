@@ -8,10 +8,11 @@ import cats.syntax.flatMap.*
 
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
+import cative.syncere.filesystem.SyncDir
 import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
-class Main(cli: Cli, s3: S3, watcher: Watcher) {
+class Main(cli: Cli, s3: S3, syncDir: SyncDir, watcher: Watcher) {
   def play(intels: Intels): IO[Intels] = {
     val actions = Engine.actions(intels)
     for {
@@ -26,7 +27,7 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
     for {
       validatedEvents <- watcher.take
       events <- Watcher.stripInvalid(validatedEvents)
-      intels <- FileSystem.intelsSansProblems(events)
+      intels <- syncDir.intelsSansProblems(events)
       next = intels.foldLeft(previous) { case (intels, intel) =>
         previous.absorb(intel)
       }
@@ -37,7 +38,7 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
   val run: IO[ExitCode] =
     for {
       remoteDb <- s3.fetchIntels
-      localDb <- FileSystem.fetchIntels
+      localDb <- syncDir.fetchIntels
       unified = Intels.fresh(localDb ++ remoteDb)
       _ <- printTagged("fresh unified state", unified)
       intels <- play(unified)
@@ -51,11 +52,13 @@ class Main(cli: Cli, s3: S3, watcher: Watcher) {
 
 object Main extends IOApp {
 
-  def mainResource(cli: Cli): Resource[IO, Main] =
+  def mainResource(cli: Cli): Resource[IO, Main] = {
+    val syncDir = SyncDir(Config.SyncPath)
     for {
-      s3 <- S3.apply
+      s3 <- S3(syncDir)
       watcher <- Watcher.watch(Config.SyncPath)
-    } yield Main(cli, s3, watcher)
+    } yield Main(cli, s3, syncDir, watcher)
+  }
 
   override def run(args: List[String]): IO[ExitCode] = {
     val res = for {

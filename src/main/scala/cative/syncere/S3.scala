@@ -20,12 +20,13 @@ import software.amazon.awssdk.services.s3.model.S3Object
 import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
+import cative.syncere.filesystem.SyncDir
 import meta.Remote
 
 object S3 {
   import Config.*
 
-  def apply: Resource[IO, S3] =
+  def apply(syncDir: SyncDir): Resource[IO, S3] =
     for {
       credentials <- Resource.fromAutoCloseable(
         IO(ProfileCredentialsProvider.create(AwsConfigProfile))
@@ -39,10 +40,10 @@ object S3 {
             .build()
         )
       )
-    } yield new S3(client, S3Bucket)
+    } yield new S3(client, S3Bucket, syncDir)
 }
 
-class S3(client: S3Client, bucket: String) {
+class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
   private val con = Console.apply[IO]
 
   def fetchIntels: IO[List[Remote]] = {
@@ -58,7 +59,7 @@ class S3(client: S3Client, bucket: String) {
       case d @ DeleteLocally(key) =>
         for {
           _ <- con.println(show" --- deleting locally $key")
-          when <- FileSystem.deleteKey(key)
+          when <- syncDir.deleteKey(key)
         } yield d.result(when).some
       case d @ DeleteRemotely(key) =>
         val req = DeleteObjectRequest.builder().bucket(bucket).key(key).build()
@@ -72,7 +73,7 @@ class S3(client: S3Client, bucket: String) {
         val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- downloading $key") >> IO
           .blocking(
-            client.getObject(req, FileSystem.keyToPath(key))
+            client.getObject(req, syncDir.keyToPath(key))
           )
           .as(d.result.some)
       case NoOp =>
@@ -82,7 +83,7 @@ class S3(client: S3Client, bucket: String) {
         val req = PutObjectRequest.builder().bucket(bucket).key(key).build()
         con.println(show" --- uploading $key") >> IO
           .blocking(
-            client.putObject(req, FileSystem.keyToPath(key))
+            client.putObject(req, syncDir.keyToPath(key))
           )
           .as(u.result.some)
     }

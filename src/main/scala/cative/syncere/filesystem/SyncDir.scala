@@ -1,4 +1,4 @@
-package cative.syncere
+package cative.syncere.filesystem
 
 import java.io.FileNotFoundException
 import java.nio.file.Files
@@ -9,24 +9,17 @@ import scala.jdk.CollectionConverters._
 import cats.effect.IO
 import cats.syntax.traverse._
 
-import cative.syncere.filesystem.Creation
-import cative.syncere.filesystem.Deletion
-import cative.syncere.filesystem.Event
-import cative.syncere.filesystem.Md5
-import cative.syncere.filesystem.Modification
+import cative.syncere.*
 import cative.syncere.meta.Db
 import cative.syncere.meta.KeyEntry
 import cative.syncere.meta.Local
 import cative.syncere.meta.LocallyDeleted
 
-object FileSystem {
-
-  type FSIntel = Local | LocallyDeleted
-
+case class SyncDir(syncPath: Path) {
   private val walkSyncFiles: IO[List[Path]] = for {
     all <- IO(
       Files
-        .walk(Config.SyncPath)
+        .walk(syncPath)
     ).map(_.iterator().asScala)
     flagged <- all.toList
       .map(path => IO.blocking((path, path.toFile().isFile())))
@@ -34,32 +27,15 @@ object FileSystem {
     filesOnly = flagged.collect { case (path, true) => path }
   } yield filesOnly
 
-  private def lastModified(p: Path): IO[Instant] =
-    IO.blocking(Files.getLastModifiedTime(p)).map(_.toInstant)
-
   private def localIntel(p: Path): IO[Local] =
     for {
       md5 <- Md5.path(p)
       lastMod <- lastModified(p)
     } yield Local(
-      pathToKey(Config.SyncPath)(p),
+      pathToKey(syncPath)(p),
       md5,
       lastMod
     )
-
-  /** Produces a key given the root.
-    *
-    * Root itself corresponds to the empty key.
-    */
-  private def pathToKey(root: Path)(p: Path): KeyEntry.Key =
-    root.relativize(p).toString
-
-  private def dbFromFileIterator(entries: List[KeyEntry.Key]): Db = {
-    val keys = entries.map { k =>
-      (k, KeyEntry(k, None))
-    }.toMap
-    Db.build("localfs")(keys)
-  }
 
   /** Deletes the key from the FS and yields the time when the deletion
     * happened.
@@ -73,7 +49,7 @@ object FileSystem {
     for {
       raw <- walkSyncFiles
       refined = raw
-        .map(pathToKey(Config.SyncPath))
+        .map(pathToKey(syncPath))
         .filter(_.nonEmpty)
     } yield dbFromFileIterator(refined)
 
