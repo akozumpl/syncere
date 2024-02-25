@@ -53,10 +53,10 @@ class Main(cli: Cli, s3: S3, syncDir: SyncDir, watcher: Watcher) {
 object Main extends IOApp {
 
   def mainResource(cli: Cli): Resource[IO, Main] = {
-    val syncDir = SyncDir(Config.SyncPath)
+    val syncDir = SyncDir(cli.syncPath)
     for {
       s3 <- S3(syncDir)
-      watcher <- Watcher.watch(Config.SyncPath)
+      watcher <- Watcher.watch(cli.syncPath)
     } yield Main(cli, s3, syncDir, watcher)
   }
 

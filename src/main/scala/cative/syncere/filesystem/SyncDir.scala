@@ -75,6 +75,6 @@ case class SyncDir(syncPath: Path) {
     }
 
   def keyToPath(key: KeyEntry.Key): Path =
-    Config.SyncPath.resolve(key)
+    syncPath.resolve(key)
 
 }
