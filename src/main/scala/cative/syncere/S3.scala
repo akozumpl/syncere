@@ -26,10 +26,14 @@ import meta.Remote
 object S3 {
   import Config.*
 
-  def apply(syncDir: SyncDir): Resource[IO, S3] =
+  def apply(
+      bucket: String,
+      syncDir: SyncDir,
+      awsConfigProfile: String
+  ): Resource[IO, S3] =
     for {
       credentials <- Resource.fromAutoCloseable(
-        IO(ProfileCredentialsProvider.create(AwsConfigProfile))
+        IO(ProfileCredentialsProvider.create(awsConfigProfile))
       )
       client <- Resource.fromAutoCloseable(
         IO(
@@ -40,7 +44,7 @@ object S3 {
             .build()
         )
       )
-    } yield new S3(client, S3Bucket, syncDir)
+    } yield new S3(client, bucket, syncDir)
 }
 
 class S3(client: S3Client, bucket: String, syncDir: SyncDir) {

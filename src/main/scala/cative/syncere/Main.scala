@@ -55,7 +55,7 @@ object Main extends IOApp {
   def mainResource(cli: Cli): Resource[IO, Main] = {
     val syncDir = SyncDir(cli.syncPath)
     for {
-      s3 <- S3(syncDir)
+      s3 <- S3(cli.s3Bucket, syncDir, cli.awsConfigProfile)
       watcher <- Watcher.watch(cli.syncPath)
     } yield Main(cli, s3, syncDir, watcher)
   }
