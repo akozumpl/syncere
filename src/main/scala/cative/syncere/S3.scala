@@ -9,6 +9,8 @@ import cats.syntax.option.*
 import cats.syntax.show.*
 import cats.syntax.traverse.*
 
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
@@ -26,14 +28,22 @@ import meta.Remote
 object S3 {
   import Config.*
 
+  private type CredsProvider = AwsCredentialsProvider with AutoCloseable
+
   def apply(
       bucket: String,
       syncDir: SyncDir,
-      awsConfigProfile: String
+      awsConfigProfile: Option[String]
   ): Resource[IO, S3] =
     for {
       credentials <- Resource.fromAutoCloseable(
-        IO(ProfileCredentialsProvider.create(awsConfigProfile))
+        IO {
+          (awsConfigProfile match {
+            case Some(profileName) =>
+              ProfileCredentialsProvider.create(profileName)
+            case None => DefaultCredentialsProvider.create()
+          }): CredsProvider
+        }
       )
       client <- Resource.fromAutoCloseable(
         IO(

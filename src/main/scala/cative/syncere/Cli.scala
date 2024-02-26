@@ -8,7 +8,7 @@ import cats.syntax.apply._
 import com.monovore.decline.*
 
 case class Cli(
-    awsConfigProfile: String,
+    awsConfigProfile: Option[String],
     once: Boolean,
     s3Bucket: String,
     syncPath: Path,
@@ -18,11 +18,13 @@ case class Cli(
 }
 
 object Cli {
-  val awsConfigProfile = Opts.option[String](
-    "aws-profile",
-    help = "AWS config profile to use",
-    short = "a"
-  )
+  val awsConfigProfile = Opts
+    .option[String](
+      "aws-profile",
+      help = "AWS config profile to use",
+      short = "a"
+    )
+    .orNone
   val once =
     Opts
       .flag(
