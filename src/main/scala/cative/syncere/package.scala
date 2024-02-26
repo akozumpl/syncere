@@ -13,6 +13,10 @@ given Show[Instant] = Show.fromToString
 given [A](using Show[A]): Show[List[A]] =
   Show.show(_.map(_.show).mkString("\n  ", "\n  ", ""))
 
+extension (i: Instant) {
+  def getEpochMillis: Long = i.getEpochSecond() * 1000 + i.getNano() / 1000_000
+}
+
 extension [A](validated: Validated[Throwable, A]) {
   def toIO: IO[A] = IO.fromEither(validated.toEither)
 }

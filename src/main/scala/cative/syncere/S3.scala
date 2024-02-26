@@ -85,11 +85,11 @@ class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
       case d @ Download(remote) =>
         val key = remote.key
         val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
-        con.println(show" --- downloading $key") >> IO
-          .blocking(
-            client.getObject(req, syncDir.keyToPath(key))
-          )
-          .as(d.result.some)
+        for {
+          _ <- con.println(show" --- downloading $key")
+          _ <- IO.blocking(client.getObject(req, syncDir.keyToPath(key)))
+          _ <- syncDir.setLastModified(key, remote.lastChange)
+        } yield d.result.some
       case NoOp =>
         IO.pure(None)
       case u @ Upload(local) =>

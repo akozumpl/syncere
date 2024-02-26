@@ -7,6 +7,7 @@ import java.time.Instant
 
 import scala.jdk.CollectionConverters._
 import cats.effect.IO
+import cats.syntax.monadError._
 import cats.syntax.traverse._
 
 import cative.syncere.*
@@ -76,5 +77,14 @@ case class SyncDir(syncPath: Path) {
 
   def keyToPath(key: KeyEntry.Key): Path =
     syncPath.resolve(key)
+
+  def setLastModified(key: KeyEntry.Key, time: Instant): IO[Unit] = {
+    val file = keyToPath(key).toFile
+    IO.blocking(
+      file.setLastModified(time.getEpochMillis)
+    ).reject { case false =>
+      new FilesystemError("Unable to set last modified timestamp.")
+    }.as(())
+  }
 
 }
