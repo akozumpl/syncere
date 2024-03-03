@@ -1,7 +1,9 @@
 package cative.syncere
 
+import java.io.IOException
 import java.time.Instant
 
+import scala.concurrent.duration.FiniteDuration
 import cats.Show
 import cats.data.Validated
 import cats.effect.IO
@@ -35,3 +37,13 @@ def printTagged[A: Show](tag: String, a: A)(implicit
     con: Console[IO]
 ): IO[Unit] =
   con.println(s"--- $tag: ---") >> printShow(a)
+
+/** Retries IO errors infinitely. */
+def retryInfinitely[A](
+    doingWhat: String,
+    io: IO[A],
+    delay: FiniteDuration
+): IO[A] =
+  io.recoverWith { case e: IOException =>
+    errorln(s"Failed $doingWhat: ${e.getMessage()}") *> IO.sleep(delay) *> io
+  }

@@ -28,7 +28,7 @@ object Watcher {
       .fromAutoCloseable(IO(FileSystems.getDefault().newWatchService()))
       .evalMap { ws =>
         val watcher = new Watcher(ws, path)
-        watcher.register
+        watcher.registerWithRetry
       }
 }
 
@@ -36,6 +36,9 @@ class Watcher private (ws: WatchService, path: Path) {
   private def register: IO[Watcher] =
     IO(path.register(ws, K.ENTRY_CREATE, K.ENTRY_DELETE, K.ENTRY_MODIFY))
       .as(this)
+
+  private def registerWithRetry: IO[Watcher] =
+    retryInfinitely("obtaining the sync dir", register, Constants.WatcherRetry)
 
   def take: IO[List[Validated[WatcherError, Event]]] =
     for {
