@@ -37,6 +37,7 @@ lazy val root = (project in file("."))
       "prep",
       List("scalafixAll", "scalafmtSbt", "scalafmtAll", "test").mkString(";")
     ),
+    Compile / doc / sources := Seq.empty, // https://github.com/lampepfl/dotty/issues/14212
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision
   )
