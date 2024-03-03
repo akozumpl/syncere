@@ -3,6 +3,11 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 val CirceVersion = "0.14.6"
 val Slf4jVersion = "2.0.9"
 
+val AssemblyExclusions = Set(
+  "io.netty.versions.properties",
+  "module-info.class"
+)
+
 lazy val root = (project in file("."))
   .settings(
     name := "syncere",
@@ -37,7 +42,16 @@ lazy val root = (project in file("."))
       "prep",
       List("scalafixAll", "scalafmtSbt", "scalafmtAll", "test").mkString(";")
     ),
-    Compile / doc / sources := Seq.empty, // https://github.com/lampepfl/dotty/issues/14212
     semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
+    semanticdbVersion := scalafixSemanticdb.revision,
+
+    // releasing:
+    Compile / doc / sources := Seq.empty, // https://github.com/lampepfl/dotty/issues/14212
+    assemblyMergeStrategy := {
+      case PathList(ps @ _*) if AssemblyExclusions.contains(ps.last) =>
+        MergeStrategy.discard
+      case x =>
+        val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
+        oldStrategy(x)
+    }
   )
