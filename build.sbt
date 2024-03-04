@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "syncere",
     organization := "org.cative",
-    version := "0.1-SNAPSHOT",
+    version := "0.1.3-SNAPSHOT",
     scalaVersion := "3.3.1",
     scalacOptions ++= Seq(
       "-deprecation",
