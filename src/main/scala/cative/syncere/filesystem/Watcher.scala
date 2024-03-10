@@ -42,7 +42,7 @@ class Watcher private (ws: WatchService, path: Path) {
 
   def take: IO[List[Validated[WatcherError, Event]]] =
     for {
-      key <- IO(ws.take())
+      key <- IO.interruptible(ws.take())
       events = key.pollEvents.asScala.toList.map(Event.decodeWatchEvent(path))
       _ <- IO(key.reset())
         .ensure(WatcherError(s"Cannot reset $key"))(identity)
