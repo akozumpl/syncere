@@ -27,6 +27,7 @@ class Main(cli: Cli, s3: S3, syncDir: SyncDir, watcher: Watcher) {
     for {
       validatedEvents <- watcher.take
       events <- Watcher.stripInvalid(validatedEvents)
+      _ <- printTagged("polled events", events)
       intels <- syncDir.intelsSansProblems(events)
       next = intels.foldLeft(previous) { case (intels, intel) =>
         previous.absorb(intel)

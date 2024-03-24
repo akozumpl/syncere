@@ -7,6 +7,7 @@ import cats.data.Validated
 import cats.syntax.either._
 
 import cative.syncere.meta.KeyEntry.Key
+import cats.Show
 
 sealed trait Event {
   def key: Key
@@ -29,6 +30,8 @@ object Event {
           s"Failed to decode path from event ${event.toString}."
         ).asLeft
     }
+
+  given Show[Event] = Show(e => s"${e.getClass.getSimpleName()} ${e.key}")
 
   def decodeWatchEvent(root: Path)(
       watchEvent: WatchEvent[_]
