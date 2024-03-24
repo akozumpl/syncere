@@ -12,6 +12,7 @@ import cats.data.Validated.Valid
 import cats.effect.IO
 import cats.effect.Resource
 import cats.syntax.monadError.*
+import cats.syntax.option.*
 import cats.syntax.traverse.*
 
 import cative.syncere.*
@@ -38,7 +39,11 @@ class Watcher private (ws: WatchService, path: Path) {
       .as(this)
 
   private def registerWithRetry: IO[Watcher] =
-    retryInfinitely("obtaining the sync dir", register, Constants.WatcherRetry)
+    retryInfinitely(
+      "obtaining the sync dir".some,
+      register,
+      Constants.WatcherRetry
+    )
 
   def take: IO[List[Validated[WatcherError, Event]]] =
     for {

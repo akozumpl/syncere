@@ -40,10 +40,14 @@ def printTagged[A: Show](tag: String, a: A)(implicit
 
 /** Retries IO errors infinitely. */
 def retryInfinitely[A](
-    doingWhat: String,
+    doingWhat: Option[String],
     io: IO[A],
     delay: FiniteDuration
 ): IO[A] =
   io.recoverWith { case e: IOException =>
-    errorln(s"Failed $doingWhat: ${e.getMessage()}") *> IO.sleep(delay) *> io
+    (doingWhat match {
+      case Some(msg) => errorln(s"Failed $msg: ${e.getMessage()}")
+      case None      => IO.unit
+    }) *> IO.sleep(delay)
+      *> retryInfinitely(doingWhat, io, delay)
   }

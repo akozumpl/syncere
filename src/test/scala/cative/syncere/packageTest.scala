@@ -1,6 +1,11 @@
 package cative.syncere
 
+import java.io.IOException
 import java.time.Instant
+
+import scala.concurrent.duration._
+import cats.effect.Ref
+import cats.syntax.monadError.*
 
 import weaver.SimpleIOSuite
 
@@ -15,5 +20,14 @@ object packageTest extends SimpleIOSuite {
     ) and expect(
       nonzero.getEpochMillis == 449672400123L
     )
+  }
+
+  test("retryInfinitely does just that.") {
+    val thrice = Ref.unsafe(3)
+    val io = thrice
+      .getAndUpdate(_ - 1)
+      .map(_ < 0)
+      .ensure(new IOException("the aura of nostalgia"))(identity)
+    retryInfinitely(None, io, 1.millisecond).map(res => expect(res))
   }
 }
