@@ -3,11 +3,11 @@ package cative.syncere.filesystem
 import java.nio.file.Path
 import java.nio.file.WatchEvent
 
+import cats.Show
 import cats.data.Validated
 import cats.syntax.either._
 
 import cative.syncere.meta.KeyEntry.Key
-import cats.Show
 
 sealed trait Event {
   def key: Key
