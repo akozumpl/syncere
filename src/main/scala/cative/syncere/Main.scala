@@ -4,15 +4,40 @@ import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
 import cats.effect.kernel.Resource
+import cats.effect.std.Queue
 import cats.syntax.flatMap.*
+import cats.syntax.traverse.*
 
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
+import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.filesystem.SyncDir
 import cative.syncere.filesystem.Watcher
 import cative.syncere.given
 
-class Main(cli: Cli, s3: S3, syncDir: SyncDir, watcher: Watcher) {
+class Main(
+    queue: Queue[IO, FreshIntel],
+    cli: Cli,
+    s3: S3,
+    syncDir: SyncDir,
+    watcher: Watcher
+) {
+
+  private def blockingDrain(intels: Intels): IO[Intels] =
+    for {
+      first <- queue.take
+      rest <- queue.tryTakeN(None)
+    } yield intels.absorbAll(first :: rest)
+
+  private def drain(intels: Intels): IO[Intels] =
+    queue.tryTakeN(None).map(intels.absorbAll)
+
+  private def queueAll(isIo: IO[List[FreshIntel]]): IO[Unit] =
+    for {
+      is <- isIo
+      _ <- is.traverse(queue.offer)
+    } yield ()
+
   def play(intels: Intels): IO[Intels] = {
     val actions = Engine.actions(intels)
     for {
@@ -23,32 +48,35 @@ class Main(cli: Cli, s3: S3, syncDir: SyncDir, watcher: Watcher) {
     } yield next
   }
 
-  def poll(previous: Intels): IO[Intels] =
+  def watch: IO[Unit] = for {
+    validatedEvents <- watcher.take
+    events <- Watcher.stripInvalid(validatedEvents)
+    _ <- printTagged("polled events", events)
+    intels = syncDir.intelsSansProblems(events)
+    _ <- queueAll(intels)
+  } yield ()
+
+  def consumeQueue(previous: Intels): IO[Intels] =
     for {
-      validatedEvents <- watcher.take
-      events <- Watcher.stripInvalid(validatedEvents)
-      _ <- printTagged("polled events", events)
-      intels <- syncDir.intelsSansProblems(events)
-      next = intels.foldLeft(previous) { case (intels, intel) =>
-        previous.absorb(intel)
-      }
+      next <- blockingDrain(previous)
       _ <- printTagged("next state", next)
       played <- play(next)
     } yield played
 
-  val run: IO[ExitCode] =
-    for {
-      remoteDb <- s3.fetchIntels
-      localDb <- syncDir.fetchIntels
-      unified = Intels.fresh(localDb ++ remoteDb)
-      _ <- printTagged("fresh unified state", unified)
-      intels <- play(unified)
+  val run: IO[ExitCode] = for {
+    _ <- queueAll(s3.fetchIntels)
+    _ <- queueAll(syncDir.fetchIntels)
+    unified <- drain(Intels.empty)
+    _ <- printTagged("fresh unified state", unified)
+    intels <- play(unified)
 
-      _ <- IO.whenA(cli.isForever)(
-        intels.iterateForeverM(poll).as(())
-      )
-
-    } yield ExitCode.Success
+    _ <- IO.whenA(cli.isForever) {
+      for {
+        _ <- watch.foreverM.start
+        _ <- intels.iterateForeverM(consumeQueue)
+      } yield ()
+    }
+  } yield ExitCode.Success
 }
 
 object Main extends IOApp {
@@ -58,7 +86,8 @@ object Main extends IOApp {
     for {
       s3 <- S3(cli.s3Bucket, syncDir, cli.awsConfigProfile)
       watcher <- Watcher.watch(cli.syncPath)
-    } yield Main(cli, s3, syncDir, watcher)
+      queue <- Resource.eval(Queue.unbounded[IO, FreshIntel])
+    } yield Main(queue, cli, s3, syncDir, watcher)
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
