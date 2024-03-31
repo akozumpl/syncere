@@ -48,6 +48,14 @@ class Main(
     } yield next
   }
 
+  /** Polls S3 for one iteration. */
+  def poll: IO[Unit] = for {
+    _ <- IO.sleep(cli.pollInterval)
+    _ <- printShow("Polling S3.")
+    _ <- queueAll(s3.fetchIntels)
+  } yield ()
+
+  /** Watches the filesystem for one iteration. */
   def watch: IO[Unit] = for {
     validatedEvents <- watcher.take
     events <- Watcher.stripInvalid(validatedEvents)
@@ -59,8 +67,9 @@ class Main(
   def consumeQueue(previous: Intels): IO[Intels] =
     for {
       next <- blockingDrain(previous)
-      _ <- printTagged("next state", next)
-      played <- play(next)
+      played <-
+        if (next == previous) IO.pure(previous)
+        else printTagged("next state", next) *> play(next)
     } yield played
 
   val run: IO[ExitCode] = for {
@@ -72,6 +81,7 @@ class Main(
 
     _ <- IO.whenA(cli.isForever) {
       for {
+        _ <- poll.foreverM.start
         _ <- watch.foreverM.start
         _ <- intels.iterateForeverM(consumeQueue)
       } yield ()

@@ -40,7 +40,7 @@ object Cli {
   val pollInterval = Opts
     .option[Duration](
       "poll-interval",
-      help = "How often to poll S3 for updates.",
+      help = "How often to poll S3 for updates, e.g. PT1H.",
       short = "p"
     )
     .map(_.toScala)
