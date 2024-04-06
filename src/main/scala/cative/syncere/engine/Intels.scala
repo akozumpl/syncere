@@ -4,7 +4,6 @@ import cats.Show
 import cats.syntax.contravariant.*
 import cats.syntax.option.*
 
-import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.given
 import cative.syncere.meta.KeyEntry.Key
 import cative.syncere.meta.*
@@ -34,8 +33,6 @@ case class Intels(intels: Map[Key, Intel]) {
 
 object Intels {
   given Show[Intels] = Show[List[Intel]].contramap(_.intels.values.toList)
-
-  type FreshIntel = Local | LocallyDeleted | Remote | RemotelyDeleted
 
   val empty: Intels = Intels(Map.empty)
 

@@ -10,10 +10,10 @@ import cats.syntax.traverse.*
 
 import cative.syncere.engine.Engine
 import cative.syncere.engine.Intels
-import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.filesystem.SyncDir
 import cative.syncere.filesystem.Watcher
 import cative.syncere.given
+import cative.syncere.meta.FreshIntel
 
 class Main(
     queue: Queue[IO, FreshIntel],

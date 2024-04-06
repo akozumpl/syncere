@@ -19,10 +19,10 @@ import software.amazon.awssdk.services.s3.model.ListObjectsRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Object
 
-import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
 import cative.syncere.filesystem.SyncDir
+import cative.syncere.meta.FreshIntel
 import meta.Remote
 
 object S3 {

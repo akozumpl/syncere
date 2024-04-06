@@ -11,8 +11,8 @@ import weaver.SimpleIOSuite
 import weaver.SourceLocation
 
 import cative.syncere.TestValues
-import cative.syncere.engine.Intels.FreshIntel
 import cative.syncere.filesystem.Md5
+import cative.syncere.meta.FreshIntel
 import cative.syncere.meta.*
 
 object EngineTest extends SimpleIOSuite with TestValues {
