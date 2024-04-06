@@ -38,16 +38,26 @@ def printTagged[A: Show](tag: String, a: A)(implicit
 ): IO[Unit] =
   con.println(s"--- $tag: ---") >> printShow(a)
 
-/** Retries IO errors infinitely. */
-def retryInfinitely[A](
+/** Retries IO if it failed.
+  *
+  * `attempts` indicates maximum number of attempts to retry. `None` retries
+  * indefinitelyu.
+  */
+def retry[A](
     doingWhat: Option[String],
     io: IO[A],
-    delay: FiniteDuration
+    delay: FiniteDuration,
+    attempts: Option[Int]
 ): IO[A] =
   io.recoverWith { case e: IOException =>
-    (doingWhat match {
-      case Some(msg) => errorln(s"Failed $msg: ${e.getMessage()}")
-      case None      => IO.unit
-    }) *> IO.sleep(delay)
-      *> retryInfinitely(doingWhat, io, delay)
+    attempts match {
+      case Some(attempts) if attempts < 1 =>
+        IO.raiseError(e)
+      case attempts =>
+        (doingWhat match {
+          case Some(msg) => errorln(s"Failed $msg: ${e.getMessage()}")
+          case None      => IO.unit
+        }) *> IO.sleep(delay)
+          *> retry(doingWhat, io, delay, attempts.map(_ - 1))
+    }
   }

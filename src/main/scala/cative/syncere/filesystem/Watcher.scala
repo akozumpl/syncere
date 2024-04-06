@@ -39,10 +39,11 @@ class Watcher private (ws: WatchService, path: Path) {
       .as(this)
 
   private def registerWithRetry: IO[Watcher] =
-    retryInfinitely(
+    retry(
       "obtaining the sync dir".some,
       register,
-      Constants.WatcherRetry
+      Constants.WatcherRetry,
+      None
     )
 
   def take: IO[List[Validated[WatcherError, Event]]] =
