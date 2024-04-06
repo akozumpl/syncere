@@ -29,9 +29,6 @@ class Main(
       rest <- queue.tryTakeN(None)
     } yield intels.absorbAll(first :: rest)
 
-  private def drain(intels: Intels): IO[Intels] =
-    queue.tryTakeN(None).map(intels.absorbAll)
-
   private def queueAll(isIo: IO[List[FreshIntel]]): IO[Unit] =
     for {
       is <- isIo
@@ -69,21 +66,18 @@ class Main(
       next <- blockingDrain(previous)
       played <-
         if (next == previous) IO.pure(previous)
-        else printTagged("next state", next) *> play(next)
+        else printTagged("state", next) *> play(next)
     } yield played
 
   val run: IO[ExitCode] = for {
     _ <- queueAll(s3.fetchIntels)
     _ <- queueAll(syncDir.fetchIntels)
-    unified <- drain(Intels.empty)
-    _ <- printTagged("fresh unified state", unified)
-    intels <- play(unified)
 
     _ <- IO.whenA(cli.isForever) {
       for {
         _ <- poll.foreverM.start
         _ <- watch.foreverM.start
-        _ <- intels.iterateForeverM(consumeQueue)
+        _ <- Intels.empty.iterateForeverM(consumeQueue)
       } yield ()
     }
   } yield ExitCode.Success
