@@ -1,5 +1,6 @@
 package cative.syncere
 
+import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 import cats.data.Validated
 import cats.effect.IO
@@ -63,7 +64,12 @@ class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
   def fetchIntels: IO[List[Remote]] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     for {
-      iterObjs <- IO(client.listObjects(req).contents().asScala.toList)
+      iterObjs <- retry(
+        "fetching S3 updates".some,
+        IO.blocking(client.listObjects(req).contents()).map(_.asScala.toList),
+        30.seconds,
+        5.some
+      )
       is <- iterObjs.traverse(_.toRemote.toIO)
     } yield is
   }
