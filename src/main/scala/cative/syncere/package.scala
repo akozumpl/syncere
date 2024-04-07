@@ -10,6 +10,8 @@ import cats.effect.IO
 import cats.effect.std.Console
 import cats.syntax.show._
 
+import software.amazon.awssdk.core.exception.SdkClientException
+
 given Show[Instant] = Show.fromToString
 
 given [A](using Show[A]): Show[List[A]] =
@@ -49,7 +51,7 @@ def retry[A](
     delay: FiniteDuration,
     attempts: Option[Int]
 ): IO[A] =
-  io.recoverWith { case e: IOException =>
+  io.recoverWith { case e: (IOException | SdkClientException) =>
     attempts match {
       case Some(attempts) if attempts < 1 =>
         IO.raiseError(e)

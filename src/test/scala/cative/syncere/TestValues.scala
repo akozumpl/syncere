@@ -1,15 +1,18 @@
 package cative.syncere
 
+import java.io.IOException
 import java.nio.file.Path
 import java.time.Instant
 
-import cative.syncere.filesystem.Md5
-import cative.syncere.filesystem.Modification
-import cative.syncere.meta.Local
-import cative.syncere.meta.Remote
+import filesystem.Md5
+import filesystem.Modification
+import meta.Local
+import meta.Remote
 
 trait TestValues {
   val HourSeconds = 3600
+
+  val IoException = new IOException("the aura of nostalgia")
 
   val key1 = "fileio.mkv"
   val key2 = "unbearable.json"

@@ -1,6 +1,5 @@
 package cative.syncere
 
-import java.io.IOException
 import java.time.Instant
 
 import scala.concurrent.duration._
@@ -10,7 +9,7 @@ import cats.syntax.option.*
 
 import weaver.SimpleIOSuite
 
-object packageTest extends SimpleIOSuite {
+object packageTest extends SimpleIOSuite with TestValues {
   pureTest("Instant.getEpochMillis computes.") {
     val exact = Instant.ofEpochSecond(449672400L, 0)
     val almost = Instant.ofEpochSecond(449672400L, 1234)
@@ -28,7 +27,7 @@ object packageTest extends SimpleIOSuite {
     val io = ten
       .getAndUpdate(_ - 1)
       .map(_ < 0)
-      .ensure(new IOException("the aura of nostalgia"))(identity)
+      .ensure(IoException)(identity)
     retry(None, io, 1.millisecond, None).map(res => expect(res))
   }
 
@@ -37,7 +36,7 @@ object packageTest extends SimpleIOSuite {
     val io = four
       .getAndUpdate(_ - 1)
       .map(_ < 0)
-      .ensure(new IOException("the aura of nostalgia"))(identity)
+      .ensure(IoException)(identity)
     for {
       notEnough <- retry(None, io, 1.millisecond, 4.some).attempt
       enough <- retry(None, io, 1.millisecond, 5.some).attempt
