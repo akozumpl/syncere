@@ -15,7 +15,7 @@ import cative.syncere.filesystem.Md5
 import cative.syncere.meta.FreshIntel
 import cative.syncere.meta.*
 
-object EngineTest extends SimpleIOSuite with TestValues {
+object EngineFTest extends SimpleIOSuite with TestValues {
   extension (e: Expectations) {
 
     /** Appends the reported source code line. */
