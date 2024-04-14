@@ -96,7 +96,10 @@ object Engine {
     case l: Local =>
       Upload(l)
     case LocallyDeleted(key, _) =>
-      DeleteRemotely(key)
+      // Two reasons to avoid deleting remotely here:
+      // 1. Under a race condition we might delete a genuine new remote file
+      // 2. If the local deletion was an action of remote deletion, the request is unnecessary
+      NoOp
     case r: Remote =>
       Download(r)
     case RemotelyDeleted(key) =>

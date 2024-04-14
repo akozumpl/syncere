@@ -13,6 +13,13 @@ object EngineTest extends SimpleIOSuite with TestValues {
     )
   )
 
+  // action tests
+  pureTest("Local deletion on its own produces no action.") {
+    expect(Engine.action(LocallyDeleted(key1, anInstant)) == NoOp)
+  }
+
+  // updateRemoteSnapshot() tests
+
   pureTest("Key missing from the RemoteSnapshot casuses deletion.") {
     expect(
       aFullIntel.absorb(RemoteSnapshot.empty) == Intels(
