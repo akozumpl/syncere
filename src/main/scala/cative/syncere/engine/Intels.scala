@@ -15,6 +15,7 @@ case class Intels(intels: Map[Key, Intel]) {
     case l: Local            => Engine.updateLocal(this, l)
     case ld: LocallyDeleted  => Engine.updateLocallyDeleted(this, ld)
     case r: Remote           => Engine.updateRemote(this, r)
+    case rs: RemoteSnapshot  => Engine.updateRemoteSnapshot(this, rs)
     case rd: RemotelyDeleted => Engine.updateRemotelyDeleted(this, rd)
   }
 

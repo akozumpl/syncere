@@ -99,4 +99,5 @@ object RemotelyDeleted {
     Show.show(r => show"Remotely deleted intel: ${r.key}")
 }
 
-type FreshIntel = Local | LocallyDeleted | Remote | RemotelyDeleted
+type FreshIntel = Local | LocallyDeleted | Remote | RemotelyDeleted |
+  RemoteSnapshot

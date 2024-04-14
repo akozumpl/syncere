@@ -24,6 +24,7 @@ import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
 import cative.syncere.filesystem.SyncDir
 import cative.syncere.meta.FreshIntel
+import cative.syncere.meta.RemoteSnapshot
 import meta.Remote
 
 object S3 {
@@ -61,7 +62,7 @@ object S3 {
 class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
   private val con = Console.apply[IO]
 
-  def fetchIntels: IO[List[Remote]] = {
+  def fetchIntels: IO[RemoteSnapshot] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     for {
       iterObjs <- retry(
@@ -71,7 +72,7 @@ class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
         5.some
       )
       is <- iterObjs.traverse(_.toRemote.toIO)
-    } yield is
+    } yield RemoteSnapshot(is)
   }
 
   def play(a: Action): IO[Option[FreshIntel]] =

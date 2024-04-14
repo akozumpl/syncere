@@ -42,6 +42,29 @@ object Engine {
       }
     }(remote)
 
+  private[engine] def updateRemoteSnapshot(
+      intels: Intels,
+      remoteSnapshot: RemoteSnapshot
+  ): Intels = {
+    val absorbed = intels.absorbAll(remoteSnapshot.remotes)
+    // deal with the missing keys:
+    (intels.intels.keySet -- remoteSnapshot.keySet)
+      .foldLeft(absorbed) { case (intels, key) =>
+        intels.updateWith(key) {
+          case Some(oldIntel) =>
+            oldIntel match {
+              case FullLocallyDeleted(_, _) => None
+              case Full(l, _) =>
+                FullRemotelyDeleted(l, RemotelyDeleted(key)).some
+              case LocallyDeleted(_, _) => None
+              case Remote(_, _, _)      => None
+              case x                    => x.some
+            }
+          case None => None
+        }
+      }
+  }
+
   private[engine] def updateRemotelyDeleted(
       intels: Intels,
       deleted: RemotelyDeleted

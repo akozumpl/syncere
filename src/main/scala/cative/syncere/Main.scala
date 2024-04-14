@@ -35,6 +35,9 @@ class Main(
       _ <- is.traverse(queue.offer)
     } yield ()
 
+  private def queueOne(intelIo: IO[FreshIntel]): IO[Unit] =
+    queueAll(intelIo.map(i => List(i)))
+
   def play(intels: Intels): IO[Intels] = {
     val actions = Engine.actions(intels)
     for {
@@ -49,7 +52,7 @@ class Main(
   def poll: IO[Unit] = for {
     _ <- IO.sleep(cli.pollInterval)
     _ <- printShow("Polling S3.")
-    _ <- queueAll(s3.fetchIntels)
+    _ <- queueOne(s3.fetchIntels)
   } yield ()
 
   /** Watches the filesystem for one iteration. */
@@ -70,7 +73,7 @@ class Main(
     } yield played
 
   val run: IO[ExitCode] = for {
-    _ <- queueAll(s3.fetchIntels)
+    _ <- queueOne(s3.fetchIntels)
     _ <- queueAll(syncDir.fetchIntels)
 
     _ <- IO.whenA(cli.isForever) {
