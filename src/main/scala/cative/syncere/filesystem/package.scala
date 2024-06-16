@@ -13,6 +13,9 @@ import cative.syncere.meta.LocallyDeleted
 
 type FSIntel = Local | LocallyDeleted
 
+def delete(p: Path): IO[Unit] =
+  IO.blocking(Files.deleteIfExists(p)).as(())
+
 private def lastModified(p: Path): IO[Instant] =
   IO.blocking(Files.getLastModifiedTime(p)).map(_.toInstant)
 

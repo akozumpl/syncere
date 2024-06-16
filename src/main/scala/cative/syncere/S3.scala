@@ -24,6 +24,7 @@ import cative.syncere.engine.*
 import cative.syncere.filesystem.Md5
 import cative.syncere.filesystem.SyncDir
 import cative.syncere.meta.FreshIntel
+import cative.syncere.meta.KeyEntry.Key
 import cative.syncere.meta.RemoteSnapshot
 import meta.Remote
 
@@ -62,6 +63,17 @@ object S3 {
 class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
   private val con = Console.apply[IO]
 
+  private def getObject(key: Key): IO[Unit] = {
+    val path = syncDir.keyToPath(key)
+    val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
+
+    for {
+      _ <- filesystem.delete(path)
+      _ <- IO.blocking(client.getObject(req, path))
+    } yield ()
+
+  }
+
   def fetchIntels: IO[RemoteSnapshot] = {
     val req = ListObjectsRequest.builder().bucket(bucket).build()
     for {
@@ -91,10 +103,9 @@ class S3(client: S3Client, bucket: String, syncDir: SyncDir) {
           .as(d.result.some)
       case d @ Download(remote) =>
         val key = remote.key
-        val req = GetObjectRequest.builder().bucket(bucket).key(key).build()
         for {
           _ <- con.println(show" --- downloading $key")
-          _ <- IO.blocking(client.getObject(req, syncDir.keyToPath(key)))
+          _ <- getObject(key)
           _ <- syncDir.setLastModified(key, remote.lastChange)
         } yield d.result.some
       case NoOp =>
