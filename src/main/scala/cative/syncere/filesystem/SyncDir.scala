@@ -5,7 +5,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 
-import scala.jdk.CollectionConverters._
 import cats.effect.IO
 import cats.syntax.monadError._
 import cats.syntax.traverse._
@@ -18,10 +17,7 @@ import cative.syncere.meta.LocallyDeleted
 
 case class SyncDir(syncPath: Path) {
   private val walkSyncFiles: IO[List[Path]] = for {
-    all <- IO(
-      Files
-        .walk(syncPath)
-    ).map(_.iterator().asScala)
+    all <- listRecursively(syncPath)
     flagged <- all.toList
       .map(path => IO.blocking((path, path.toFile().isFile())))
       .sequence
